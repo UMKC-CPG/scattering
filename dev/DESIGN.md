@@ -31,8 +31,9 @@ Each entry: number, file, topic, status.
 6. [`design/06-results-store.md`](design/06-results-store.md) —
    array layout, memory budget, materialization, the read interface.
    *draft*
-7. `design/07-detector.md` — detector sphere, bins, counting
-   statistics, the unmeasured forward cone. *planned*
+7. [`design/07-detector.md`](design/07-detector.md) — detector
+   sphere, bin layouts, counts and pulls, the unmeasured cones.
+   *draft*
 8. `design/08-inversion.md` — counts → `dσ/dΩ` → `θ(b)` → `V(r)`;
    reachability and the unknown interior. *planned*
 9. `design/09-conservation-and-error-budget.md` — drift monitor;
@@ -49,10 +50,10 @@ Status is one of: planned, draft, reviewed, implemented, superseded.
 A superseded section keeps its number and file; its header names the
 replacement. Numbers are never reused.
 
-Section 8 depends on a spike (`dev/spikes/`) verifying the inversion
-formulas against the literature before they are written into DESIGN.
-Section 2's closed forms are already verified by
-`dev/spikes/coulomb_closed_forms.py`.
+Section 2's closed forms are verified by
+`dev/spikes/coulomb_closed_forms.py`; the inversion chain that
+Section 8 will specify, and the binning rules Section 7 uses, are
+verified by `dev/spikes/firsov_inversion.py`.
 
 ## Conventions
 

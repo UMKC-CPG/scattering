@@ -49,15 +49,10 @@ numbering so older cross-references still resolve.
 
 ## DESIGN
 
-- [ ] (D7) Detector: sphere, `θ` bins, counting statistics, the
-      unmeasured forward cone below `theta_min`, expected counts
-      from the cross-section table.
 - [ ] (D8) Inversion: counts → `dσ/dΩ` → `θ(b)` → `V(r)`, the
-      reachability boundary. Blocked by: the inversion spike below.
-- [ ] (spike) Verify the Abel-type inversion of the deflection
-      integral (Firsov 1953) against the literature and against
-      the Rutherford closed form, both signs, before D8 is written.
-      Lives in `dev/spikes/`.
+      reachability boundary, the tail model beyond `b_max`, the
+      sign as a stated assumption. Spike done; see
+      `dev/spikes/firsov_inversion.py`.
 - [ ] (D9) Conservation monitor and the error budget: numerical vs
       statistical, kept separate (P3).
 - [ ] (D10) Run file: the TOML schema, precedence, presets,
@@ -108,3 +103,9 @@ numbering so older cross-references still resolve.
       verified the D5 deflection quadrature to `2e-12`.
 - [x] (D4–D6) Orbit integration, deflection and cross section,
       results store.
+- [x] (spike) `firsov_inversion.py`: Firsov form verified to
+      `2e-14` both signs; tail truncation costs up to 30 %;
+      binned-count pipeline recovers `V(r)` to 1 % at `2e5`
+      particles with pull RMS 1.0; found the bin-center and
+      equal-solid-angle traps now written into D7.
+- [x] (D7) Detector.
