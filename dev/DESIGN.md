@@ -34,8 +34,9 @@ Each entry: number, file, topic, status.
 7. [`design/07-detector.md`](design/07-detector.md) — detector
    sphere, bin layouts, counts and pulls, the unmeasured cones.
    *draft*
-8. `design/08-inversion.md` — counts → `dσ/dΩ` → `θ(b)` → `V(r)`;
-   reachability and the unknown interior. *planned*
+8. [`design/08-inversion.md`](design/08-inversion.md) — counts →
+   `dσ/dΩ` → `Θ(b)` → `V(r)`; the sign assumption, the tail model,
+   reachability, error bands. *draft*
 9. `design/09-conservation-and-error-budget.md` — drift monitor;
    numerical versus statistical error. *planned*
 10. `design/10-run-file.md` — the TOML schema and precedence.

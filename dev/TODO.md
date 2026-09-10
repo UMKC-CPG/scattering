@@ -49,10 +49,6 @@ numbering so older cross-references still resolve.
 
 ## DESIGN
 
-- [ ] (D8) Inversion: counts → `dσ/dΩ` → `θ(b)` → `V(r)`, the
-      reachability boundary, the tail model beyond `b_max`, the
-      sign as a stated assumption. Spike done; see
-      `dev/spikes/firsov_inversion.py`.
 - [ ] (D9) Conservation monitor and the error budget: numerical vs
       statistical, kept separate (P3).
 - [ ] (D10) Run file: the TOML schema, precedence, presets,
@@ -61,6 +57,9 @@ numbering so older cross-references still resolve.
       probe-depth sphere, effective-potential plot, palettes.
 - [ ] (D12) Scrubber and interactive session: time and energy
       sliders, play/pause/reverse, the loop.
+- [ ] (D12) "Guess the potential" mode: a student proposes
+      `V(r)`, the forward chain runs, pulls against the counts are
+      shown (D8.11). After the core session exists.
 - [ ] (D13) Batch tier and HDF5 layout mirroring D6.3.
 - [ ] (D1.5) Decide whether `interstellar_visitor` should name a
       real object's `v_∞` or keep the round 26 km/s.
@@ -109,3 +108,5 @@ numbering so older cross-references still resolve.
       particles with pull RMS 1.0; found the bin-center and
       equal-solid-angle traps now written into D7.
 - [x] (D7) Detector.
+- [x] (D8) Inversion, with the tail model, sign assumption,
+      reach limit, and resampled error bands.
