@@ -1,0 +1,34 @@
+# rutherford_disc.toml -- a uniform-flux beam for the detector and
+# the inversion. Same physics as rutherford.toml; different beam.
+
+[potential]
+kind   = "coulomb"
+preset = "alpha_on_gold"
+
+[beam]
+energies    = ["5 MeV"]
+layout      = "disc"
+n_particles = 20000
+b_min       = 0.0
+b_max       = 12.0
+seed        = 20260910          # REQUIRED for "disc": a run that depends
+                                # on chance records the chance (A7)
+
+[detector]
+radius = 2.0
+mode   = "asymptotic"
+layout = "log_theta"
+n_bins = 40
+
+[inversion]
+assume_sign = +1                # the counts carry no sign (design 7.7);
+                                # this is the student's assumption
+tail_model  = "coulomb"         # beyond the last measured b (design 8)
+
+[fidelity]
+integrator = "dop853"
+r_max      = 40.0
+n_samples  = 200
+
+[view]
+palette = "light"

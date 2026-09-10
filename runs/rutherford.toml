@@ -1,0 +1,55 @@
+# rutherford.toml -- alpha particles on gold, the classic experiment.
+#
+# A run file is the complete, self-contained description of one run
+# (ARCHITECTURE section 7). Anything that can affect the computed
+# trajectories, the counts, or the inversion lives here, never only
+# in the rc file. Quantities may be bare numbers (natural units of
+# design section 1) or dimensioned strings ("5 MeV", "26 km/s"),
+# which the units boundary converts on load.
+
+[potential]
+kind   = "coulomb"
+preset = "alpha_on_gold"        # kappa = Z1 Z2 e^2 / 4 pi eps0, m = m_alpha
+# sign = -1                     # uncomment to flip to attraction: the
+#                               # orbits change, the histogram does not
+
+[beam]
+# A list makes an energy sweep (design 3.2); the first entry is the
+# reference energy unless reference_energy is set. Each particle is
+# run at every energy, so one particle can be followed across the
+# sweep with the energy slider.
+energies = ["3 MeV", "5 MeV", "8 MeV"]
+
+# Impact-parameter layout. "annuli" is the teaching picture: a ring
+# of particles at one b lands on one cone. "disc" is uniform flux,
+# which is what a cross section is defined against and what the
+# detector needs. b values are in units of the reference length
+# (kappa / E_ref, about 45 fm here) unless given with units.
+layout = "annuli"
+annuli = [
+  { b = 0.25, db = 0.05, n_azimuth = 24 },
+  { b = 0.50, db = 0.05, n_azimuth = 24 },
+  { b = 1.00, db = 0.05, n_azimuth = 24 },
+  { b = 2.00, db = 0.05, n_azimuth = 24 },
+  { b = 4.00, db = 0.05, n_azimuth = 24 },
+]
+
+[detector]
+radius = 2.0                    # in units of R_max (design 7.2)
+mode   = "asymptotic"           # or "position": bin by landing point
+layout = "log_theta"            # or "uniform_theta", "equal_solid_angle"
+n_bins = 40
+
+[fidelity]
+orbit_provider      = "auto"    # "analytic" | "numerical" | "auto"
+integrator          = "dop853"  # "rk45", "verlet" (teaching: shows drift)
+rtol                = 1e-10
+atol                = 1e-12
+r_max               = 40.0      # where orbits begin and end (design 4.4)
+n_samples           = 400       # per orbit; 0 = batch mode, no trajectory
+trace_angle_deg     = 2.0       # trace polyline resolution (design 4.10)
+n_deflection_points = 400       # the theta(b) table (design 5.4)
+
+[view]
+palette = "light"               # "dark", "colorblind"
+camera  = { azimuth_deg = 35, elevation_deg = 20, distance = 3.0 }
