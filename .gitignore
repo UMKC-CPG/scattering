@@ -1,0 +1,75 @@
+# ---------------------------------------------------------------------
+# .gitignore
+#
+# Excludes ordinary build and tooling debris, plus the output the
+# program itself produces. Results are deliberately kept out of the
+# repository: the input deck that generated them is the thing worth
+# version controlling, not the gigabytes that came out the other end.
+#
+# TEMPLATE: adjust the "Program output" block for the formats this
+# project actually writes, and the rc directory at the very bottom.
+# ---------------------------------------------------------------------
+
+# Python bytecode caches and packaging debris.
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Test-runner and coverage caches.
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments.
+venv/
+.venv/
+env/
+
+# Program output. Bulky derived artifacts are regenerable from the
+# input deck, which IS tracked, so they stay out of the repository.
+*.h5
+*.hdf5
+*.xmf
+*.xdmf
+*.npy
+*.npz
+*.mp4
+*.avi
+*.mkv
+
+# Rendered frames and screenshots produced during a run. Figures in
+# dev/figures/ are documentation, not output, so they are kept.
+frames/
+*.png
+!dev/figures/*.png
+
+# The command log written by the src/scripts/ entry points, which
+# append each invocation to a local `command` file. This is a
+# per-working-directory record, not project source.
+command
+
+# Slurm job output from cluster runs.
+slurm-*.out
+*.sbatch.log
+
+# Fortran / CMake builds, if this project has them.
+*.mod
+*.o
+*.a
+
+# Editor and OS debris.
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code local session state. settings.local.json accumulates
+# machine-specific permission grants and absolute paths.
+.claude/settings.local.json
+
+# Machine-local rc overrides ($SCATTERING_RC copies); never tracked.
+.scattering/

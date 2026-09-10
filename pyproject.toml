@@ -1,0 +1,43 @@
+# Minimal packaging: enough to register the console command and make
+# the src/ layout importable.
+#
+# Dependencies are DELIBERATELY omitted when the numerical environment
+# (conda, a module stack, a prebuilt venv) is pinned separately. In
+# that case install with `pip install -e . --no-deps` so pip does not
+# re-resolve numpy, h5py, or an MPI binding out from under the pinned
+# environment. If this project instead owns its dependencies, list
+# them under [project.dependencies] and drop the --no-deps advice
+# from README.md.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scattering"
+version = "0.1.0"
+description = "Teaching tool for classical scattering and its inversion"
+requires-python = ">=3.10"
+# dependencies = ["numpy", "h5py"]
+
+# The front door. See dev/ARCHITECTURE.md section 4 for every entry
+# point. Two conventions are in use in this group, and either is
+# fine so long as the choice is recorded in ARCHITECTURE section 4:
+#
+#   1. A console script backed by a module inside the package, as
+#      below. Gives the user a bare `project` command after install.
+#   2. Standalone scripts in src/scripts/, each paired with its own
+#      <name>rc.py defaults file (see src/scripts/XYZ.py). Run
+#      directly, no install step needed.
+#
+# Uncomment and point at a real module once it exists; leaving a
+# console script aimed at a missing module breaks `pip install -e .`.
+#
+# [project.scripts]
+# scsim = "scattering.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
