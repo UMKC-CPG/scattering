@@ -175,9 +175,10 @@ Three places need care, and the table marks each:
 
 - **`θ → π` at `b̃ → 0` (repulsive head-on).** Both `b̃` and `sin θ`
   vanish; the ratio is finite (for Rutherford, `1 / (16 Ẽ²)`). The
-  node at `b̃ = 0` is evaluated as the limit `lim (b̃ / sin θ)` by
-  one-sided extrapolation from the two nearest nodes, and flagged as
-  extrapolated.
+  node at `b̃ = 0` is evaluated by extrapolating `log(dσ/dΩ)`
+  linearly in `(π − θ)²` from the two nearest nodes — the cross
+  section is even in `π − θ` there, so this is second order where
+  extrapolation in `θ` would be first — and flagged as extrapolated.
 
 - **`dΘ/db̃ = 0` (rainbow).** `dσ/dΩ` diverges. Out of scope for the
   first version's potentials (Coulomb's `dΘ/db̃` never vanishes) but

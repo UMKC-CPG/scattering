@@ -71,11 +71,10 @@ numbering so older cross-references still resolve.
 ## CODE
 
 - [ ] (src/scripts/) Rename the template `XYZ.py` / `XYZrc.py` to
-      `scsim.py` / `scsimrc.py` once P-sections exist; delete the
-      template `tests/unit/test_example.py` when a real test lands.
-- [ ] (src/scattering/) Package skeleton per A4: subpackage
-      directories and `__init__.py` docstrings. No physics until
-      the governing pseudocode exists.
+      `scsim.py` / `scsimrc.py` once P12 exists.
+- [ ] (src/scattering/) Remaining groups per A4 — `detector/`,
+      `inversion/`, `analysis/`, `geometry/`, `render/`, `ui/`,
+      `sinks/` — each after its pseudocode section.
 
 ---
 
@@ -110,3 +109,9 @@ numbering so older cross-references still resolve.
 - [x] (P1–P6) Pseudocode for units, Coulomb, beam, orbits,
       deflection, results store and driver. The pericenter-to-beam
       rotation (P2 eq. 2.13) was checked numerically in both signs.
+- [x] (v0.5-orbits) `core/`, `potentials/`, `beam/`, `orbits/`,
+      `deflection/`, `run/` implemented with 136 tests. Building the
+      store corrected three design claims upward: the entry plane is
+      the tangent plane `Z₀ = R_max` (D4.6); the exterior deflection
+      is geometry, not error, and scales as `1/R_max²` (D4.4, D9.4);
+      the head-on cross section extrapolates in `(π−θ)²` (D5.5).

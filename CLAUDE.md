@@ -336,7 +336,7 @@ dev/              Design document chain (see dev/README.md)
   design/         One file per design section, indexed by DESIGN.md
   pseudocode/     One file per pseudocode section
   spikes/         Verified throwaway checks cited by the chain
-runs/             Ready-to-run example run files (TOML)   [planned]
+runs/             Ready-to-run example run files (TOML)
 src/
   scattering/     The importable library, by chain stage
   scripts/        Entry points scsim.py / scbatch.py and rc files
@@ -353,7 +353,7 @@ separate environment and no modulefile (`dev/ARCHITECTURE.md` §9.1).
 
 ```bash
 source $CPG_VENV_RIGID            # the shared course environment
-python3 src/scripts/scsim.py runs/rutherford.toml   # Tier 1 (planned)
+python3 src/scripts/scsim.py runs/rutherford.toml   # Tier 1 (after P12)
 python3 dev/spikes/coulomb_closed_forms.py          # re-run a spike
 ```
 

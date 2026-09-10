@@ -22,25 +22,25 @@ the design section it implements, status.
 
 1. [`pseudocode/01-natural-units.md`](pseudocode/01-natural-units.md)
    — governs `core/natural_units.py`, `core/units.py`,
-   `core/presets.py`. Design 1. *draft*
+   `core/presets.py`. Design 1. *implemented*
 2. [`pseudocode/02-coulomb.md`](pseudocode/02-coulomb.md) — governs
    `potentials/potential_interface.py`, `potentials/coulomb.py`.
-   Design 2. *draft*
+   Design 2. *implemented*
 3. [`pseudocode/03-beam.md`](pseudocode/03-beam.md) — governs
    `beam/beam_spec.py`, `beam/impact_sampler.py`,
-   `beam/energy_sampler.py`. Design 3. *draft*
+   `beam/energy_sampler.py`. Design 3. *implemented*
 4. [`pseudocode/04-orbits.md`](pseudocode/04-orbits.md) — governs
    `orbits/orbit_provider.py`, `orbits/equations_of_motion.py`,
    `orbits/integrators.py`, `orbits/analytic_orbits.py`,
    `orbits/turning_point.py`, `orbits/embedding.py`. Design 4.
-   *draft*
+   *implemented*
 5. [`pseudocode/05-deflection.md`](pseudocode/05-deflection.md) —
    governs `deflection/deflection_function.py`,
    `deflection/cross_section.py`, `deflection/solid_angle.py`.
-   Design 5. *draft*
+   Design 5. *implemented*
 6. [`pseudocode/06-results-store.md`](pseudocode/06-results-store.md)
    — governs `run/results_store.py`, `run/driver.py`. Design 6.
-   *draft*
+   *implemented*
 7. `pseudocode/07-detector.md` — `detector/`. Design 7. *planned*
 8. `pseudocode/08-inversion.md` — `inversion/`. Design 8. *planned*
 9. `pseudocode/09-error-budget.md` — `analysis/`. Design 9.

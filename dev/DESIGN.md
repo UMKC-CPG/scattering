@@ -17,20 +17,20 @@ the section you need, then read only that file.
 Each entry: number, file, topic, status.
 
 1. [`design/01-natural-units.md`](design/01-natural-units.md) —
-   natural units, scaling, and the real-unit presets. *draft*
+   natural units, scaling, and the real-unit presets. *implemented*
 2. [`design/02-coulomb-closed-forms.md`](design/02-coulomb-closed-forms.md)
-   — Coulomb orbit, deflection function, cross section. *draft*
+   — Coulomb orbit, deflection function, cross section. *implemented*
 3. [`design/03-beam.md`](design/03-beam.md) — beam energies, impact
-   parameter sampling, the seed. *draft*
+   parameter sampling, the seed. *implemented*
 4. [`design/04-orbit-integration.md`](design/04-orbit-integration.md)
    — planar equations of motion, integrator, `R_max`, the ensemble
-   clock, embedding into the scene. *draft*
+   clock, embedding into the scene. *implemented*
 5. [`design/05-deflection-and-cross-section.md`](
    design/05-deflection-and-cross-section.md) — `θ(b)` by
-   quadrature, `dσ/dΩ`, solid angle, the annulus-to-cone map. *draft*
+   quadrature, `dσ/dΩ`, solid angle, the annulus-to-cone map. *implemented*
 6. [`design/06-results-store.md`](design/06-results-store.md) —
    array layout, memory budget, materialization, the read interface.
-   *draft*
+   *implemented*
 7. [`design/07-detector.md`](design/07-detector.md) — detector
    sphere, bin layouts, counts and pulls, the unmeasured cones.
    *draft*

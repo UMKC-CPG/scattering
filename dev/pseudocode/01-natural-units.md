@@ -29,7 +29,9 @@ record Preset:
     kappa_per_mass    pint quantity [length^3 / time^2], or None
                       (gravity: kappa = kappa_per_mass * m; m cancels)
     mass              pint quantity [mass], or None
-    reference_energy  pint quantity [energy]
+    reference_energy  pint quantity [energy], or None
+    v_inf             pint quantity [speed], or None; the gravity
+                      preset gives E_ref per unit mass through it
     display_units     map dimension -> unit string
     note              text shown on screen (the v_inf / c ratio, the
                       equivalence-principle remark)
@@ -77,8 +79,10 @@ and `ell_0` against the approximate values in D1.5 to 1 %.
 ## 1.3 Building the scales
 
 ```
-function build_scales(potential_table, first_energy) -> ReferenceScales:
+function build_scales(potential_table, potential, first_energy)
+        -> ReferenceScales:
     # potential_table is the resolved [potential] table (D10.5);
+    # potential supplies default_reference_length (P2.1);
     # first_energy is energies[0] as a pint quantity.
 
     if potential_table.preset is not None:
@@ -92,7 +96,9 @@ function build_scales(potential_table, first_energy) -> ReferenceScales:
     mass   = potential_table.mass    or preset.mass
     kpm    = preset.kappa_per_mass   if kappa is None else None
     E_ref  = potential_table.reference_energy or preset.reference_energy
-             or first_energy
+    if E_ref is None and preset.v_inf is not None:
+        E_ref = 0.5 * (mass or 1 kg) * preset.v_inf^2   # gravity preset
+    E_ref  = E_ref or first_energy
 
     if kappa is None and kpm is None:
         fail "no kappa: give [potential].kappa or a preset"

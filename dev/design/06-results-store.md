@@ -273,12 +273,16 @@ in-memory store.
 
 ## 6.9 Invariants and tests
 
-- `phase` is nondecreasing along `n` for every particle, and takes
-  each of its three values at least once when `S > 0`.
+- `phase` is nondecreasing along `n` for every particle; every
+  particle takes the values `0` and `+1`, and every particle with
+  `b̃ > 0` also takes `−1` (the head-on particle enters exactly at
+  `t̃ = 0` and may skip it).
 - `position[k, i, n]` for `phase == ±1` lies on the straight
   asymptote to floating-point precision (free flight is exact).
-- `|position[k, i, entry_index]| = R̃_max` and likewise at
-  `exit_index`, to the integrator's event tolerance.
+- The first sample with `phase == 0` lies inside the sphere by no
+  more than one grid step of free flight: `R̃_max − ṽ_∞ Δt̃ <
+  |position[k, i, entry_index]| ≤ R̃_max`; likewise the first
+  outbound sample lies outside by no more than one step.
 - `polar[k, i, n, 0]` equals `|position[k, i, n]|` at every sample.
 - `turning_point` and `turning_point_q` agree to the integrator
   tolerance; `finite_radius` is at that tolerance for an analytic

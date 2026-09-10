@@ -27,7 +27,7 @@ record OrbitSettings:               # from [fidelity] (P10)
     asymptote_tolerance float
     trace_angle         radians
     trace_points_max    int
-    entry_plane_z       Z~_0 = sqrt(r_max^2 - b_max^2)        (D4.6)
+    entry_plane_z       Z~_0 = r_max, the tangent plane       (D4.6)
 
 record Orbit:
     energy, impact
@@ -78,11 +78,10 @@ class AnalyticProvider:
         entry_time = time_of_anomaly(A, H_in)
         exit_time  = time_of_anomaly(A, H_out)
 
-        # Entry-plane crossing: solve y_p(H) = -Z_0 for H in [H_in, 0]
-        # (y_p is monotone there). Bisect on H, then Newton-polish.
-        def y_of(H): return (R @ position of state_at_anomaly(A, H)).y
-        H_tau = root of (y_of(H) + settings.entry_plane_z) on [H_in, 0]
-        tau = time_of_anomaly(A, H_tau)
+        # Entry-plane crossing (D4.6, eq. 4.5): on the inbound
+        # free-flight leg, by extrapolation from the entry state.
+        entry = rotate(R, state_at_anomaly(A, H_in))
+        tau = entry_plane_time(entry, entry_time, settings, energy)
 
         state_at(times):
             H = anomaly_of_time(A, t) for each t          # P2.3, vectorized
@@ -125,7 +124,7 @@ class NumericalProvider:
         r_min = hypot(xp, yp)
         pericenter_dir = (xp, yp) / r_min
 
-        tau = root of (sol.sol(t).y + settings.entry_plane_z) on [0, t_p]
+        tau = entry_plane_time(sol.sol(0), 0.0, settings, energy)   # (4.5)
 
         # Conservation drift along the integrated span (P9.3).
         samples = sol.sol(linspace(0, t_exit, 512))
@@ -172,7 +171,21 @@ this check and for P8's tail model.
 
 ---
 
-## 4.5 Equations of motion (D4.3)
+## 4.5 The entry-plane time (D4.6)
+
+```
+function entry_plane_time(entry_state, entry_time, settings, energy):
+    # The crossing of y_p = -Z_0 lies on the straight inbound leg
+    # for every b > 0 (the entry point has y_e >= -R_max), so it is
+    # an extrapolation at the asymptotic speed, eq. (4.5).
+    (x_e, y_e, _, _) = entry_state
+    return entry_time - (y_e + settings.entry_plane_z)
+                        / asymptotic_speed(energy)
+```
+
+---
+
+## 4.6 Equations of motion (D4.3)
 
 ```
 function equations_of_motion(potential) -> rhs:
@@ -189,7 +202,7 @@ acceleration is `+s r⃗ / r³`.
 
 ---
 
-## 4.6 Integrators (D4.9)
+## 4.7 Integrators (D4.9)
 
 ```
 function exit_event(r_max):
@@ -247,7 +260,7 @@ stored velocities as slopes. Both expose `.t` (sample times) and
 
 ---
 
-## 4.7 The adaptive trace (D4.10)
+## 4.8 The adaptive trace (D4.10)
 
 ```
 function adaptive_trace(sol, settings) -> array (m, 2):
@@ -268,7 +281,7 @@ function adaptive_trace(sol, settings) -> array (m, 2):
 
 ---
 
-## 4.8 Embedding (D4.8)
+## 4.9 Embedding (D4.8)
 
 ```
 function embed(x_p, y_p, azimuth) -> (x, y, z):
@@ -286,7 +299,7 @@ identity in v1 (A6.7).
 
 ---
 
-## 4.9 The turning-point module
+## 4.10 The turning-point module
 
 `turning_point.py` holds the general root-of-`g` computation of
 D5.2 and P5.2 (it is shared by the deflection stage) and the
@@ -301,7 +314,7 @@ function compare_turning_points(orbit, r_min_q) -> float:
 
 ---
 
-## 4.10 Verification
+## 4.11 Verification
 
 `tests/unit/test_orbits.py` and `tests/integration/test_providers.py`:
 
@@ -314,15 +327,17 @@ function compare_turning_points(orbit, r_min_q) -> float:
   the conservation identities to `1e-13`.
 - **Time reversal.** `r(t_p + τ) = r(t_p − τ)` to `1e-9` for
   `τ` up to the entry time.
-- **Exact start.** With the closed-form start, the angle between
-  the exit velocity and `out_direction(closed_form_deflection)` is
-  at integrator tolerance for `R_max` in `{20, 40, 80}`.
-- **Corrected start.** With `orbit_provider = "numerical"` forced
-  and the corrected start used (test hook that disables the closed
-  form), the same angle scales as `1 / R_max` across the doubling
-  sequence, with `R_max × angle` constant to 5 %.
-- **Entry plane.** `state_at(tau).y == -Z_0` to `1e-10`; every
-  particle in a beam has exactly one crossing.
+- **Exterior deflection.** For either start, the angle between the
+  exit velocity and `out_direction(closed_form_deflection)` scales
+  as `1 / R_max^2` over `R_max` in `{20, 40, 80}` (ratio 4 ± 10 %).
+- **Start error.** With the corrected start forced (the
+  `force_corrected` hook of `initial_state`), the exit state's
+  distance from the analytic provider's scales as `1 / R_max` over
+  the same sequence; with the exact start it is below `1e-7` for
+  every `R_max`.
+- **Entry plane.** The straight inbound leg evaluated at `tau` has
+  `y == -Z_0 == -r_max` to `1e-10`; every particle in a beam has
+  exactly one crossing.
 - **Exit.** `hypot(exit_state.x, exit_state.y) == r_max` to the
   event tolerance; the integration status is "event", never "cap".
 - **Verlet order.** Energy drift at steps `h, h/2, h/4` scales as

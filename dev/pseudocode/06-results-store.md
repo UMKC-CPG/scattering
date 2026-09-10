@@ -92,19 +92,61 @@ function check_budget(spec, rc) -> int:
 
 ---
 
-## 6.3 The driver: the forward chain in order (A2, A4.10)
+## 6.3 The run specification the driver consumes
+
+P10 owns the run file: its schema, loading, validation, defaults,
+and write-back. Until P10 exists the driver still needs a typed
+record to consume, so its *shape* is fixed here and P10 will
+populate it. This is a seam inventory (`CLAUDE.md`): every field
+below names who produces it.
+
+```
+record PotentialSpec:               # from [potential]; produced by P10
+    kind              "coulomb"
+    sign              +1 | -1 | None (None = from preset)
+    preset            name | None
+    kappa, mass       pint quantity | None
+    reference_energy  pint quantity | None
+    reference_length  pint quantity | None
+
+record RunSpec:
+    potential   PotentialSpec
+    beam        BeamSpec (P3.1) whose energies, annulus b and db,
+                b_min and b_max are AS LOADED: pint quantities,
+                dimensioned strings, or bare natural-unit numbers.
+                The driver converts them (6.4) once; nothing below
+                the driver sees a pint object.
+    fidelity    the OrbitSettings fields of P4.1 (except
+                entry_plane_z, derived here) plus n_samples,
+                n_deflection_points, trace_points_max, orbit_provider
+    detector_radius   multiple of r_max (D7.2), default 2.0
+
+record RcSettings:                  # machine-local; produced by P10
+    max_store_bytes   int, default 4e9
+```
+
+In v0.5 a `RunSpec` is constructed directly in code and tests; P10
+adds the TOML path. When P10 arrives the unit conversion of 6.4
+moves into `run_spec.py`'s resolution step (D10.8) and the driver
+receives natural-unit values; that move is a P10 change and is
+recorded there.
+
+---
+
+## 6.4 The driver: the forward chain in order (A2, A4.10)
 
 ```
 function build_results_store(spec: RunSpec, rc, progress = None)
         -> ResultsStore:
-    check_budget(spec, rc)
-    scales    = build_scales(spec.potential, spec.beam.energies[0])   # P1.3
     potential = make_potential(spec.potential)          # P2; Coulomb in v1
-    beam      = generate_beam(spec.beam, potential)     # P3.2
+    scales    = build_scales(spec.potential, potential,
+                             spec.beam.energies[0])     # P1.3
+    beam_spec = resolve_beam_units(spec.beam, scales)   # P1.4 to_natural
+                #   energies -> "energy"; b, db, b_min, b_max -> "length"
+    check_budget(spec, rc)
+    beam      = generate_beam(beam_spec, potential)     # P3.2
     settings  = OrbitSettings from spec.fidelity, with
-                entry_plane_z = sqrt(r_max^2 - b_max_effective^2)
-                where b_max_effective = beam.impact_parameter.max()
-                (+ width for annuli)
+                entry_plane_z = r_max                       (D4.6)
     provider  = choose_provider(potential, settings)    # P4.1
     K = len(beam.energies)
     N = len(beam.impact_parameter)
@@ -173,7 +215,7 @@ function build_results_store(spec: RunSpec, rc, progress = None)
 
 ---
 
-## 6.4 Filling one particle's samples
+## 6.5 Filling one particle's samples
 
 ```
 function fill_samples(store, k, i, orbit, azimuth, settings, r_detect):
@@ -219,7 +261,7 @@ particle reaches `r_detect`, so no particle is far past the sphere.
 
 ---
 
-## 6.5 Verification
+## 6.6 Verification
 
 `tests/unit/test_results_store.py`,
 `tests/integration/test_driver.py`:
@@ -229,17 +271,19 @@ particle reaches `r_detect`, so no particle is far past the sphere.
   is set below it and the message names `max_store_bytes`.
 - After `freeze()`, every array raises on write and every attribute
   assignment raises.
-- `phase` is nondecreasing along `n` for every `(k, i)`, and takes
-  `−1`, `0`, `+1` at least once each when `S ≥ 50`.
+- `phase` is nondecreasing along `n` for every `(k, i)`; every
+  particle takes `0` and `+1`, and every `b > 0` particle also
+  `−1`, when `S ≥ 50`.
 - On free-flight samples, `position` lies on the straight asymptote
   to `1e-12`.
 - `polar[..., 0] == |position|` to `1e-12`; `polar[..., 1]` at
   `entry_index` is `−φ_∞` to `1e-6` for Coulomb.
-- `|position[k, i, entry_index]| == r_max` and likewise at
-  `exit_index − 1 … exit_index`, to the event tolerance.
+- `r_max − v_inf Δt < |position[k, i, entry_index]| ≤ r_max`, and
+  the first outbound sample is outside `r_max` by at most one step.
 - `turning_point` vs `turning_point_q`: `≤ 1e-9` relative.
-- `finite_radius` is `≤ 1e-8` for the analytic start; for the
-  corrected start it scales as `1 / r_max` (P4.10).
+- `finite_radius` scales as `1 / r_max^2` across a doubling
+  sequence and is the same for both providers to the integrator
+  tolerance (P4.11).
 - **Determinism (A8.6(3)).** `build_results_store(spec)` twice
   gives bit-identical arrays; a scripted sequence of `frame`,
   `particle`, `trace`, and `tables` calls leaves every array

@@ -131,18 +131,32 @@ leaves effect 2, which is bounded by the deflection the potential
 produces outside `R̃_max`. `R̃_max` is then chosen so that bound is
 below the fidelity setting `asymptote_tolerance` (Section 10): for
 a potential falling faster than `1 / r̃` — Yukawa, hard sphere, a
-well — the exterior deflection is negligible at modest `R̃_max`; for
-a pure `1 / r̃` tail the exterior deflection is `O(b̃ / R̃_max)` and
-the design refuses to run a Coulomb-tailed potential this way
+well — the start error is negligible at modest `R̃_max`; for a pure
+`1 / r̃` tail it is `O(1 / R̃_max)` and the design refuses to run a
+Coulomb-tailed potential this way
 without the run file saying `orbit_provider = "numerical"` and the
 residual being reported on screen (P2, P14).
 
-**The residual is disclosed either way.** The orbit's exit direction
-is compared with the quadrature deflection of Section 5 for every
-particle, and the largest discrepancy at each energy is on the
-telemetry panel as *finite-radius residual*, separately from the
-integrator drift. A student who raises `R̃_max` watches it fall as
-`1 / R̃_max`, which is the spike's plot reproduced live.
+**The exterior deflection is disclosed either way.** Even the exact
+orbit's velocity at `R̃_max` differs from the asymptotic direction:
+the potential outside the sphere still deflects the particle, by
+`b̃ / (4 Ẽ R̃_max²)` for Coulomb — the transverse impulse of a
+`1 / r²` force along a straight line beyond `R̃_max`, `b̃ / (2 R̃² ṽ_∞)`,
+divided by `ṽ_∞`, with `ṽ_∞² = 2 Ẽ`. The scene draws the outbound
+leg along
+the asymptote (4.6), so this angle is the size of the kink at the
+free-flight junction — an approximation of the *display*, not of the
+physics (P14). It is measured per particle as the angle between the
+exit velocity and the asymptotic direction of Section 5, stored as
+`finite_radius`, and shown on the telemetry panel as *exterior
+deflection*, separately from the integrator drift. A student who
+raises `R̃_max` watches it fall as `1 / R̃_max²`. A first draft
+claimed this angle would vanish for the exact start; building the
+store showed it does not, and cannot: it is geometry, not error.
+The *start error* of the corrected start is a different quantity
+and a larger one — first order in `1 / R̃_max`, as the spike
+measured — and the test suite measures it by comparing the
+corrected numerical orbit against the analytic one (4.12).
 
 ---
 
@@ -171,22 +185,38 @@ Each orbit is a function of its own time. The scene needs one clock
 > **`t̃ = 0` is the instant the particle crosses the entry plane
 > `z̃ = −Z̃₀`.** The beam is a planar pulse at `t̃ = 0`.
 
-with `Z̃₀ = sqrt(R̃_max² − b̃_max²)`, so that every particle is inside
-the sphere `r̃ ≤ R̃_max` when it is on the plane. A ring of particles
-at one `b̃` shares one orbit and one crossing time, so it stays a
-ring throughout the run; particles at different `b̃` differ in
-crossing time by the physics (they move at different speeds at
-different radii), which is correct and small.
+with `Z̃₀ = R̃_max`: the plane tangent to the sphere on the beam's
+side. Every particle with `b̃ > 0` is then still *outside* the
+sphere when it crosses the plane (its position there has `r̃ =
+sqrt(R̃_max² + b̃²) > R̃_max`), so the crossing lies on the inbound
+free-flight leg, and the head-on particle crosses exactly as it
+enters. A ring of particles at one `b̃` shares one orbit and one
+crossing time, so it stays a ring throughout the run; particles at
+different `b̃` enter the sphere at slightly different times, by the
+physics, which is correct and small.
 
-The per-particle offset `τ` is found once, by root-finding `y_p(t) =
-−Z̃₀` on the integrator's dense output (or, for the analytic
-provider, on `t̃(H)`), and stored with the orbit. Every stored sample
-is at scene time `t̃`, i.e. at orbit time `t̃ + τ`.
+The per-particle offset `τ` is therefore an extrapolation, not a
+root: with the entry state `(x_e, y_e)` at `r̃ = R̃_max` inbound and
+the free-flight speed `ṽ_∞` along `+ẑ`,
+
+```
+  τ = t_entry − (y_e + R̃_max) / ṽ_∞                          (4.5)
+```
+
+which is exact for the straight leg the scene draws. A first draft
+placed the plane at `sqrt(R̃_max² − b̃_max²)` so that every crossing
+would fall on the integrated orbit; building the store showed that
+this puts every particle *inside* the sphere at `t̃ = 0`, so the
+approach was never seen and the inbound leg never existed. The
+tangent plane is the design.
 
 Before the particle reaches `R̃_max` inbound, and after it leaves
 outbound, it is in **free flight** along its asymptote: the potential
 is below the asymptote tolerance there by construction, so a straight
-line at `ṽ_∞` is the orbit to that tolerance. Free flight is how a
+line at `ṽ_∞` is the orbit to that tolerance. The inbound leg runs
+from the entry state straight back along `−ẑ`; its small kink against
+the true orbit's entry velocity is the finite-radius effect of 4.4
+and is part of that readout. Free flight is how a
 particle is shown approaching from beyond the scene and continuing
 to the detector sphere at `R̃_detect ≥ R̃_max` (Section 7) without
 integrating through empty space. The outbound free flight uses the
@@ -367,10 +397,13 @@ Rejected; see 4.10.
 - **Provider agreement.** The numerical provider on Coulomb, with
   the exact start, reproduces the analytic provider's samples to
   the integrator tolerance. This certifies A6.2.
-- **Finite-radius scaling.** With the *corrected* start forced on
-  Coulomb, the exit-direction residual against Section 5's
-  quadrature scales as `1 / R̃_max` across a doubling sequence, and
-  with the *exact* start it is at integrator tolerance for every
-  `R̃_max`. This is the spike's measurement made a regression test.
+- **Exterior deflection scaling.** For either start, the angle
+  between the exit velocity and the asymptotic direction scales as
+  `1 / R̃_max²` across a doubling sequence (ratio 4 ± 10 %).
+- **Start error.** With the *corrected* start forced on Coulomb, the
+  exit state differs from the analytic provider's by an amount that
+  scales as `1 / R̃_max`; with the *exact* start the two agree to the
+  integrator tolerance for every `R̃_max`. This is the spike's
+  measurement made a regression test.
 - Every particle's entry-plane crossing exists and is unique;
   every orbit terminates by the exit event, never by the cap.

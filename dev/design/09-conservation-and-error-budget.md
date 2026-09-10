@@ -78,23 +78,26 @@ shows *where* it happens.
 
 ---
 
-## 9.4 Numerical: the finite-radius residual
+## 9.4 Numerical: the exterior deflection
 
-Section 4.4 established that an orbit started at finite `R̃_max` on
-the straight asymptote is deflected wrongly by `O(1 / R̃_max)`, and
-Section 4.7 that the exit direction is not the scattering angle.
-The residual between them,
+Section 4.4 established that the potential outside `R̃_max` still
+deflects the particle, so that even the exact orbit's exit velocity
+differs from the asymptotic direction of Section 5, and Section 4.6
+that the scene draws the outbound leg along that asymptote. The
+angle between them,
 
 ```
   finite_radius(k, i) = angle( exit velocity, n̂_out )           (9.2)
 ```
 
 is stored per particle (Section 6.3) and its maximum per energy is
-on the panel. With the exact start it is at integrator tolerance;
-with the corrected start it is the `1 / R̃_max` curve of the spike.
-It is *not* a conservation residual — energy and angular momentum
-are conserved perfectly along a wrongly started orbit — and it is
-listed separately for that reason.
+on the panel as *exterior deflection*. It is the size of the kink
+where the drawn free flight meets the integrated orbit — a labeled
+approximation of the display (P14) — and it falls as `1 / R̃_max²`.
+It is *not* a conservation residual, and it is not an integration
+error either: it is the same for the analytic and the numerical
+provider. It is listed under the numerical column because its
+remedy is a larger `R̃_max`, which is a fidelity setting.
 
 ---
 

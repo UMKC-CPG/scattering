@@ -13,10 +13,14 @@ reverse.
 
 ## Status
 
-**Design in progress; no runnable code yet** (2026-09-10). `VISION`
-and `ARCHITECTURE` are complete; `DESIGN` sections 1–3 are drafted
-and the Coulomb closed forms are verified by a spike. See
-`dev/TODO.md`.
+**`v0.5-orbits` (2026-09-10): the forward chain from a run
+specification to a frozen results store runs and is tested** —
+natural units and presets, the Coulomb closed forms, the beam, both
+orbit providers, the deflection function and cross section, and the
+store with its driver, 136 tests. No display yet, and no run-file
+loader: a run is built in code from the records of
+`src/scattering/run/run_spec.py` until pseudocode section 10 lands.
+See `dev/TODO.md` for what is next.
 
 ## What It Will Do
 
