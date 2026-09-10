@@ -34,56 +34,77 @@ numbering so older cross-references still resolve.
 
 ## VISION
 
-<!-- Goals and principles. -->
+(none)
 
 ---
 
 ## ARCHITECTURE
 
-<!-- Layout, modules, build, entry points. -->
+- [ ] (A9.3) Rendering-budget spike: frame rate vs particle count
+      and trace length for a many-thin-traces scene, on an
+      interactive node with software rendering. Sets the Tier-1
+      default `n_particles`. Blocked by: nothing; do before D11.
 
 ---
 
 ## DESIGN
 
-<!-- Algorithms, data structures, mathematical foundations. -->
+- [ ] (D7) Detector: sphere, `θ` bins, counting statistics, the
+      unmeasured forward cone below `theta_min`, expected counts
+      from the cross-section table.
+- [ ] (D8) Inversion: counts → `dσ/dΩ` → `θ(b)` → `V(r)`, the
+      reachability boundary. Blocked by: the inversion spike below.
+- [ ] (spike) Verify the Abel-type inversion of the deflection
+      integral (Firsov 1953) against the literature and against
+      the Rutherford closed form, both signs, before D8 is written.
+      Lives in `dev/spikes/`.
+- [ ] (D9) Conservation monitor and the error budget: numerical vs
+      statistical, kept separate (P3).
+- [ ] (D10) Run file: the TOML schema, precedence, presets,
+      fidelity table, `seed` required for `disc`.
+- [ ] (D11) Scene and geometry: annulus, cone, orbit plane,
+      probe-depth sphere, effective-potential plot, palettes.
+- [ ] (D12) Scrubber and interactive session: time and energy
+      sliders, play/pause/reverse, the loop.
+- [ ] (D13) Batch tier and HDF5 layout mirroring D6.3.
+- [ ] (D1.5) Decide whether `interstellar_visitor` should name a
+      real object's `v_∞` or keep the round 26 km/s.
 
 ---
 
 ## PSEUDOCODE
 
-<!-- Algorithm specifications. Note that "write the pseudocode for
-     X" is itself a task, and on this chain it is the task that must
-     precede the corresponding CODE entry. -->
+- [ ] (P1–P6) Write pseudocode sections for design sections 1–6.
+      None exist yet; the chain gate in `CLAUDE.md` forbids any
+      `src/` edit until the governing section does.
 
 ---
 
 ## CODE
 
-<!-- Implementation. Every entry here should be able to name the
-     pseudocode section that governs it. -->
+- [ ] (src/scripts/) Rename the template `XYZ.py` / `XYZrc.py` to
+      `scsim.py` / `scsimrc.py` once P-sections exist; delete the
+      template `tests/unit/test_example.py` when a real test lands.
+- [ ] (src/scattering/) Package skeleton per A4: subpackage
+      directories and `__init__.py` docstrings. No physics until
+      the governing pseudocode exists.
 
 ---
 
 ## Campaigns
 
-<!-- Long, bounded hunts through the whole code base for one class of
-     problem — bugs, performance, security, a large imported body of
-     code being brought up to standard — do not fit the five-level
-     partition, because they cut across all of it.
-
-     Give each campaign its own section below, or its own ledger file
-     in dev/ once it outgrows a section (see dev/README.md). Do not
-     force them into the level sections: on an earlier project this
-     was left too late and the level sections silently became a mix
-     of design work and bug triage, which made the whole list
-     unreadable.
-
-     Delete this heading if the project has no campaigns. -->
+(none)
 
 ---
 
 ## ARCHIVE
 
-<!-- Resolved items, newest first. Keep them: the archive is the only
-     record of what was tried and rejected at the task level. -->
+- [x] (V) VISION.md written and ratified. Tagged `v0.1-vision`.
+- [x] (A) ARCHITECTURE.md written. Tagged `v0.2-architecture`.
+- [x] (D1–D3) Natural units, Coulomb closed forms, beam.
+- [x] (spike) `coulomb_closed_forms.py`: closed forms verified to
+      `3e-13`; found and fixed the `v₀` convention error in D1;
+      measured the finite-`R_max` residual at `0.2353 / R`;
+      verified the D5 deflection quadrature to `2e-12`.
+- [x] (D4–D6) Orbit integration, deflection and cross section,
+      results store.

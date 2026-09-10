@@ -37,6 +37,19 @@ to the value at *half* the energy. Section 1 now uses `v₀ = sqrt(E_ref
 / m)`, under which everything checks. A convention chosen for a
 pretty number is not free.
 
+**Second question (added the same day):** does the general
+deflection integral of design section 5, eq. (5.3), with the `ρ²`
+substitution and `scipy.integrate.quad` on `[0, ∞)`, reproduce the
+Rutherford closed form — and does a cross section built by
+differencing that integral reproduce (2.11)?
+
+**Answer:** yes. `|Θ_quad − Θ_exact| ≤ 2e-12` over 36 `(sign, E, b)`
+cases spanning `b` from 0.05 to 50; the turning point from the root
+of `g` matches (2.3) to `2e-13`; the cross section from a
+`δ = 1e-4` centered difference of the integral matches (2.11) to
+`7e-9` relative, consistent with the `O(δ²)` truncation the design
+predicts.
+
 **The residual it measures.** The deflection (2.8) differs from a
 direct integration of the equations of motion started on the
 straight-line asymptote at finite radius `R` by an amount that scales

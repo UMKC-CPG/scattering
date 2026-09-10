@@ -19,7 +19,8 @@ Run:  python3 dev/spikes/coulomb_closed_forms.py
 """
 
 import numpy as np
-from scipy.integrate import solve_ivp
+from scipy.integrate import quad, solve_ivp
+from scipy.optimize import brentq
 
 
 def orbit_checks(sign, energy, impact):
@@ -104,6 +105,73 @@ def deflection_vs_integration(sign, energy, impact, start_radius):
     return exact - np.arctan2(final_vx, final_vy)
 
 
+def deflection_by_quadrature(sign, energy, impact):
+    """Design section 5, eq. (5.3): the deflection integral with the
+    rho^2 substitution that removes the turning-point singularity.
+    Returns (Theta, r_min). Written for Coulomb only, as a check that
+    the general machinery reproduces the closed form."""
+
+    if impact == 0.0:
+        return np.pi, 1.0 / energy
+
+    def g(r):
+        return 1.0 - impact ** 2 / r ** 2 - sign / (r * energy)
+
+    def g_prime(r):
+        return 2.0 * impact ** 2 / r ** 3 + sign / (r * r * energy)
+
+    # Bracket the largest root of g by marching inward from far out.
+    high = 1e3 * max(1.0, impact)
+    low = high
+    while g(low) > 0.0:
+        low *= 0.5
+    turning = brentq(g, low, high, xtol=1e-15, rtol=1e-15)
+
+    def integrand(rho):
+        radius = turning + rho * rho
+        if rho == 0.0:
+            return 1.0 / np.sqrt(g_prime(turning)) / turning ** 2
+        return rho / (radius * radius * np.sqrt(g(radius)))
+
+    integral, _ = quad(integrand, 0.0, np.inf,
+                       epsabs=1e-12, epsrel=1e-12, limit=200)
+    return np.pi - 4.0 * impact * integral, turning
+
+
+def quadrature_checks():
+    """Worst error of (5.3) against (2.8), and of the cross section
+    built from a differenced integral against (2.11)."""
+
+    worst_theta = 0.0
+    worst_turning = 0.0
+    for sign in (+1, -1):
+        for energy in (0.3, 1.0, 3.0):
+            for impact in (0.05, 0.3, 1.0, 3.0, 10.0, 50.0):
+                theta, turning = deflection_by_quadrature(
+                    sign, energy, impact)
+                exact = 2.0 * np.arctan(sign / (2.0 * energy * impact))
+                ecc = np.sqrt(1.0 + (2.0 * energy * impact) ** 2)
+                exact_turning = (ecc + sign) / (2.0 * energy)
+                worst_theta = max(worst_theta, abs(theta - exact))
+                worst_turning = max(
+                    worst_turning,
+                    abs(turning - exact_turning) / exact_turning)
+
+    # Cross section via dTheta/db from differencing the integral at
+    #   b (1 +/- delta), as design section 5.4 prescribes.
+    delta = 1e-4
+    worst_xsec = 0.0
+    for impact in (0.1, 0.5, 2.0, 8.0):
+        theta = abs(deflection_by_quadrature(+1, 1.0, impact)[0])
+        upper = deflection_by_quadrature(+1, 1.0, impact * (1 + delta))[0]
+        lower = deflection_by_quadrature(+1, 1.0, impact * (1 - delta))[0]
+        slope = (upper - lower) / (2.0 * impact * delta)
+        xsec = impact / np.sin(theta) / abs(slope)
+        rutherford = 1.0 / (16.0 * np.sin(theta / 2.0) ** 4)
+        worst_xsec = max(worst_xsec, abs(xsec - rutherford) / rutherford)
+    return worst_theta, worst_turning, worst_xsec
+
+
 def main():
     worst = {}
     cases = [(1.0, 0.5), (1.0, 2.0), (3.0, 0.3), (0.5, 4.0), (2.0, 0.05)]
@@ -115,6 +183,12 @@ def main():
     print('Closed-form identities, worst relative error over all cases:')
     for key, value in worst.items():
         print(f'  {key:12s} {value:.2e}')
+
+    theta_err, turning_err, xsec_err = quadrature_checks()
+    print('\nDeflection integral (5.3) against the closed forms:')
+    print(f'  |Theta_quad - (2.8)|      worst {theta_err:.2e}')
+    print(f'  r_min from root of g      worst rel {turning_err:.2e}')
+    print(f'  dsigma/dOmega vs (2.11)   worst rel {xsec_err:.2e}')
 
     print('\nDeflection (2.8) minus direct integration from radius R,')
     print('for s=+1, E=1, b=2. R * difference should be constant:')

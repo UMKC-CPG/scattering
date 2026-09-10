@@ -22,13 +22,15 @@ Each entry: number, file, topic, status.
    — Coulomb orbit, deflection function, cross section. *draft*
 3. [`design/03-beam.md`](design/03-beam.md) — beam energies, impact
    parameter sampling, the seed. *draft*
-4. `design/04-orbit-integration.md` — planar equations of motion,
-   integrator, `R_max`, embedding into the scene. *planned*
-5. `design/05-deflection-and-cross-section.md` — `θ(b)` by
-   quadrature, `dσ/dΩ`, solid angle, the annulus-to-cone map.
-   *planned*
-6. `design/06-results-store.md` — array layout, retention, memory
-   budget, closed-form versus sampled orbits. *planned*
+4. [`design/04-orbit-integration.md`](design/04-orbit-integration.md)
+   — planar equations of motion, integrator, `R_max`, the ensemble
+   clock, embedding into the scene. *draft*
+5. [`design/05-deflection-and-cross-section.md`](
+   design/05-deflection-and-cross-section.md) — `θ(b)` by
+   quadrature, `dσ/dΩ`, solid angle, the annulus-to-cone map. *draft*
+6. [`design/06-results-store.md`](design/06-results-store.md) —
+   array layout, memory budget, materialization, the read interface.
+   *draft*
 7. `design/07-detector.md` — detector sphere, bins, counting
    statistics, the unmeasured forward cone. *planned*
 8. `design/08-inversion.md` — counts → `dσ/dΩ` → `θ(b)` → `V(r)`;
