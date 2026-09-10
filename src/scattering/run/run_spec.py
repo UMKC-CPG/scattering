@@ -1,14 +1,13 @@
 """The run specification records the driver consumes (pseudocode
 6.3).
 
-Pseudocode section 10 owns the run FILE: its schema, loading,
-validation, defaults, and write-back. These records fix only the
-shape the driver needs, so that v0.5 can build a run in code and
-tests, and so that section 10 has a target to populate. The seam
-is recorded in pseudocode 6.3: the quantities in `BeamSpec` may
-arrive as loaded (pint quantities, dimensioned strings, or bare
-natural-unit numbers) and the driver converts them once; when
-section 10 arrives, that conversion moves into its resolution step.
+Pseudocode section 10 owns the run FILE: its schema, loading, validation,
+defaults, and write-back. These records fix only the shape the driver needs, so
+that v0.5 can build a run in code and tests, and so that section 10 has a target
+to populate. The seam is recorded in pseudocode 6.3: the quantities in
+`BeamSpec` may arrive as loaded (pint quantities, dimensioned strings, or bare
+natural-unit numbers) and the driver converts them once; when section 10
+arrives, that conversion moves into its resolution step.
 
 Attribution: this module is part of the scattering teaching tool.
 """

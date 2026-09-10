@@ -1,19 +1,18 @@
 """The contract every central potential satisfies (pseudocode 2.1,
 ARCHITECTURE 6.1).
 
-A potential is a function of the radius alone, in the natural units
-of design section 1. The REQUIRED part of the contract is small: the
-value V(r), the derivative dV/dr, whether a head-on orbit (b = 0)
-exists, the default reference length, and a description for labels.
+A potential is a function of the radius alone, in the natural units of design
+section 1. The REQUIRED part of the contract is small: the value V(r), the
+derivative dV/dr, whether a head-on orbit (b = 0) exists, the default reference
+length, and a description for labels.
 
-The OPTIONAL part is a set of capabilities -- a closed-form
-deflection function, a closed-form orbit, an exact starting state
-at finite radius, a sign-flipped mirror -- each announced by a
-boolean attribute. A consumer that finds a capability present may
-use it; one that finds it absent falls back to the general
-numerical route. No consumer may ask which potential it holds: the
-Coulomb potential and a later Yukawa potential are told apart only
-by what they can do (VISION P12).
+The OPTIONAL part is a set of capabilities -- a closed-form deflection function,
+a closed-form orbit, an exact starting state at finite radius, a sign-flipped
+mirror -- each announced by a boolean attribute. A consumer that finds a
+capability present may use it; one that finds it absent falls back to the
+general numerical route. No consumer may ask which potential it holds: the
+Coulomb potential and a later Yukawa potential are told apart only by what they
+can do (VISION P12).
 
 Attribution: this module is part of the scattering teaching tool.
 Derived code should cite it.
@@ -23,10 +22,9 @@ Derived code should cite it.
 class Potential:
     """Base class for central potentials.
 
-    Subclasses override the required methods and set the capability
-    flags they support; the defaults here declare no capabilities
-    and raise if a capability is called anyway, which is a
-    programming error rather than a user error.
+    Subclasses override the required methods and set the capability flags they
+    support; the defaults here declare no capabilities and raise if a capability
+    is called anyway, which is a programming error rather than a user error.
     """
 
     # Capability flags (ARCHITECTURE 6.1). Consumers test these.
@@ -53,9 +51,9 @@ class Potential:
 
     def default_reference_length(self, kappa, reference_energy):
         """The natural length scale for this potential, as a pint
-        quantity, used when the run file does not set one (design
-        1.3). `kappa` and `reference_energy` are pint quantities;
-        this is the one place a potential touches real units, and
+        quantity, used when the run file does not set one (design 1.3). `kappa`
+        and `reference_energy` are pint quantities; this is the one place a
+        potential touches real units, and
         it does so only to divide two of them."""
         raise NotImplementedError
 

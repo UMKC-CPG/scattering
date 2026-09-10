@@ -6,8 +6,7 @@ import pytest
 
 from scattering.core.natural_units import asymptotic_speed
 from scattering.orbits import (AnalyticProvider, NumericalProvider,
-                               OrbitSettings, initial_state,
-                               out_direction)
+    OrbitSettings, initial_state, out_direction)
 from scattering.orbits.equations_of_motion import equations_of_motion
 from scattering.orbits.integrators import exit_event, integrate
 from scattering.potentials import CoulombPotential
@@ -90,9 +89,9 @@ def test_entry_plane_and_exit():
 
 def test_exterior_deflection_scales_as_one_over_r_max_squared():
     """Design 4.4 as corrected: the angle between the exit velocity
-    and the asymptote is the potential's deflection beyond R_max --
-    b / (2 R_max^2) for Coulomb -- the same for either start. The
-    first draft of this test asserted 1 / R_max and failed; that
+    and the asymptote is the potential's deflection beyond R_max -- b / (2
+    R_max^2) for Coulomb -- the same for either start. The first draft of this
+    test asserted 1 / R_max and failed; that
     order belongs to the start error, tested separately below."""
     potential = CoulombPotential(+1)
     n_out = out_direction(potential.closed_form_deflection(1.0, 2.0), 0.0)

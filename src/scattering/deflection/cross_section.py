@@ -7,13 +7,12 @@ the annulus area to the cone's solid angle is
 
 ##   dsigma/dOmega(theta) = (b / sin theta) |db / dtheta|         (5.5)
 
-Three nodes need care and are flagged: the head-on node (b = 0 and
-sin theta = 0 together; the limit is finite and is extrapolated in
-log(dsdo) against (pi - theta)^2 from the two nearest nodes), a node
-where dTheta/db = 0 (a
-rainbow; the cross section diverges), and a non-monotone table (a
-well; several b scatter to one theta and (5.5) is a sum over
-branches), which the first version refuses rather than mishandles.
+Three nodes need care and are flagged: the head-on node (b = 0 and sin theta = 0
+together; the limit is finite and is extrapolated in log(dsdo) against (pi -
+theta)^2 from the two nearest nodes), a node where dTheta/db = 0 (a rainbow; the
+cross section diverges), and a non-monotone table (a well; several b scatter to
+one theta and (5.5) is a sum over branches), which the first version refuses
+rather than mishandles.
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -57,12 +56,11 @@ def build_cross_section_table(table):
             dsdo[index] = (impact / np.sin(theta[index])) / abs(slope)
     head = np.nonzero(flags == 'extrapolated')[0]
     if head.size:
-        # The two smallest positive-b nodes, extrapolated linearly in
-        # log(dsdo) against (pi - theta)^2 to the head-on angle. Near
-        # back-scattering the cross section is even in (pi - theta),
-        # so log(dsdo) is quadratic in it and linear in its square;
-        # extrapolating in theta itself would be first order and, at
-        # the default grid, a thousand times less accurate.
+        # The two smallest positive-b nodes, extrapolated linearly in log(dsdo)
+        # against (pi - theta)^2 to the head-on angle. Near back-scattering the
+        # cross section is even in (pi - theta), so log(dsdo) is quadratic in it
+        # and linear in its square; extrapolating in theta itself would be first
+        # order and, at the default grid, a thousand times less accurate.
         finite = np.nonzero((table.impact > 0.0) & (flags == 'ok'))[0][:2]
         if finite.size == 2:
             log_values = np.log(dsdo[finite])
@@ -72,8 +70,7 @@ def build_cross_section_table(table):
             dsdo[head] = np.exp(log_values[0] + slope * (target - squared[0]))
     order = np.argsort(theta)
     return CrossSectionTable(table.energy, theta[order], dsdo[order],
-                             flags[order], float(theta.min()),
-                             float(theta.max()))
+        flags[order], float(theta.min()), float(theta.max()))
 
 
 def dsdo_at(xsec, theta_query):

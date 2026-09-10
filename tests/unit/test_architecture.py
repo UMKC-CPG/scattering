@@ -1,6 +1,6 @@
 """The architectural tests of ARCHITECTURE section 8.6 that can be
-checked by reading the source: the import rule (5) and the units
-boundary (6.6). The determinism guarantee (3) and the reachability
+checked by reading the source: the import rule (5) and the units boundary (6.6).
+The determinism guarantee (3) and the reachability
 guarantee (4) are tested where the code they govern lives."""
 
 import ast
@@ -10,14 +10,14 @@ import pytest
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2] / 'src' / 'scattering'
 
-# Groups that produce physics may not import from presentation or
-# from the sinks (ARCHITECTURE 5 and 6.5).
+# Groups that produce physics may not import from presentation or from the sinks
+# (ARCHITECTURE 5 and 6.5).
 STAGE_GROUPS = ('core', 'potentials', 'beam', 'orbits', 'deflection',
                 'detector', 'inversion', 'analysis', 'geometry')
 PRESENTATION = ('scattering.render', 'scattering.ui', 'scattering.sinks')
 
-# The detector may not see the potential or the orbits (ARCHITECTURE
-# 6.4): it consumes final directions and a bin layout only.
+# The detector may not see the potential or the orbits (ARCHITECTURE 6.4): it
+# consumes final directions and a bin layout only.
 DETECTOR_FORBIDDEN = ('scattering.potentials', 'scattering.orbits')
 
 

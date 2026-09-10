@@ -2,9 +2,9 @@
 
 """Run the test suite via pytest.
 
-A convenience wrapper so the suite can be run without remembering
-pytest's arguments. Any extra arguments are passed straight through,
-so `./tests/run_tests.py -k orientation -x` works as expected.
+A convenience wrapper so the suite can be run without remembering pytest's
+arguments. Any extra arguments are passed straight through, so
+`./tests/run_tests.py -k orientation -x` works as expected.
 """
 
 import os

@@ -4,8 +4,7 @@ import numpy as np
 import pytest
 
 from scattering.beam import (AnnulusSpec, BeamSpec, check_admissible,
-                             generate_beam, layout_annuli, particle_energy,
-                             sample_disc)
+    generate_beam, layout_annuli, particle_energy, sample_disc)
 from scattering.potentials import CoulombPotential
 
 REFERENCE_SEED = 20260910
@@ -64,9 +63,8 @@ def test_forbidden_center_asks_the_potential():
 
 
 def test_generate_beam_disc_and_flux():
-    spec = BeamSpec(energies=np.array([1.0]), layout='disc',
-                    n_particles=500, b_min=0.0, b_max=8.0,
-                    seed=REFERENCE_SEED)
+    spec = BeamSpec(energies=np.array([1.0]), layout='disc', n_particles=500,
+        b_min=0.0, b_max=8.0, seed=REFERENCE_SEED)
     beam = generate_beam(spec, CoulombPotential(+1))
     assert beam.n_particles == 500
     assert beam.flux == pytest.approx(500 / (np.pi * 64.0))

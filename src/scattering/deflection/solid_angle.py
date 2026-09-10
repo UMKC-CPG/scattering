@@ -1,12 +1,11 @@
 """The annulus-to-cone map (pseudocode 5.7, design 5.7): the tool's
 central image, as numbers.
 
-An annulus at b of width db has area Delta A = pi ((b + db)^2 -
-b^2). It scatters into the cone between theta(b + db) and theta(b),
-whose solid angle is Delta Omega = 2 pi |cos theta_1 - cos
-theta_2|. The finite ratio Delta A / Delta Omega is shown beside
-dsigma/dOmega at the annulus midpoint; as db -> 0 the two converge,
-which is the definition of a differential cross section seen as a
+An annulus at b of width db has area Delta A = pi ((b + db)^2 - b^2). It
+scatters into the cone between theta(b + db) and theta(b), whose solid angle is
+Delta Omega = 2 pi |cos theta_1 - cos theta_2|. The finite ratio Delta A / Delta
+Omega is shown beside dsigma/dOmega at the annulus midpoint; as db -> 0 the two
+converge, which is the definition of a differential cross section seen as a
 limit rather than stated as one (VISION G1).
 
 Attribution: this module is part of the scattering teaching tool.
@@ -42,6 +41,6 @@ def annulus_map(potential, energy, annulus, xsec):
     theta_2 = abs(deflection_of(potential, energy, impact))
     solid_angle = 2.0 * np.pi * abs(np.cos(theta_1) - np.cos(theta_2))
     midpoint = abs(deflection_of(potential, energy, impact + 0.5 * width))
-    return AnnulusMap(float(impact), float(width), float(area),
-                      float(theta_1), float(theta_2), float(solid_angle),
-                      float(area / solid_angle), float(dsdo_at(xsec, midpoint)))
+    return AnnulusMap(float(impact), float(width), float(area), float(theta_1),
+        float(theta_2), float(solid_angle), float(area / solid_angle),
+        float(dsdo_at(xsec, midpoint)))

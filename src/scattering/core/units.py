@@ -1,10 +1,10 @@
 """The units boundary: the only module that imports pint.
 
-Design section 1.4 and ARCHITECTURE section 6.6 fix the rule: real
-units enter the library exactly once, when a run specification is
-converted to natural units, and leave exactly once, when a value is
-formatted for display. Below `run/`, no module imports pint, accepts
-a pint object, or returns one -- an architectural test enforces it.
+Design section 1.4 and ARCHITECTURE section 6.6 fix the rule: real units enter
+the library exactly once, when a run specification is converted to natural
+units, and leave exactly once, when a value is formatted for display. Below
+`run/`, no module imports pint, accepts a pint object, or returns one -- an
+architectural test enforces it.
 
 Three operations live here (pseudocode 1.3-1.4):
 
@@ -16,9 +16,9 @@ Three operations live here (pseudocode 1.3-1.4):
                  preset's display unit.
 
 Why pint (inherited from the rigid-body tool, ARCHITECTURE 6.6): its
-per-operation cost lands only at this boundary, its error messages
-are the clearest a student will see, and it parses strings such as
-"5 MeV" so that a run file can carry readable quantities.
+per-operation cost lands only at this boundary, its error messages are the
+clearest a student will see, and it parses strings such as "5 MeV" so that a run
+file can carry readable quantities.
 
 Attribution: this module is part of the scattering teaching tool.
 Derived code should cite it.
@@ -30,8 +30,8 @@ from typing import Optional
 import numpy as np
 import pint
 
-# One registry for the whole program. `c` is the speed of light, so
-# that "MeV/c^2" parses as a mass and "0.05 c" as a speed.
+# One registry for the whole program. `c` is the speed of light, so that
+# "MeV/c^2" parses as a mass and "0.05 c" as a speed.
 UNIT_REGISTRY = pint.UnitRegistry()
 UNIT_REGISTRY.define('c = speed_of_light')
 Quantity = UNIT_REGISTRY.Quantity
@@ -69,10 +69,10 @@ class ReferenceScales:
     """The three reference scales and what follows from them
     (pseudocode 1.1). All are pint quantities in SI.
 
-    The speed scale is sqrt(E_ref / m) -- NOT sqrt(2 E_ref / m) --
-    so that the natural-unit mechanics has unit mass with kinetic
-    energy v^2 / 2 (design 1.2). `display_units` maps a dimension
-    name to the unit string the preset wants results shown in.
+    The speed scale is sqrt(E_ref / m) -- NOT sqrt(2 E_ref / m) -- so that the
+    natural-unit mechanics has unit mass with kinetic energy v^2 / 2 (design
+    1.2). `display_units` maps a dimension name to the unit string the preset
+    wants results shown in.
     """
     mass: Quantity
     energy: Quantity
@@ -106,15 +106,14 @@ class ReferenceScales:
 def build_scales(potential_table, potential, first_energy):
     """Resolve the reference scales per pseudocode 1.3.
 
-    `potential_table` is a PotentialSpec (pseudocode 6.3): a preset
-    name and optional explicit kappa, mass, reference_energy, and
-    reference_length, each a pint quantity or None. Explicit values
-    override the preset. `potential` supplies the default reference
-    length (design 1.3); `first_energy` is the first beam energy, the
-    fallback for E_ref (design 1.2).
+    `potential_table` is a PotentialSpec (pseudocode 6.3): a preset name and
+    optional explicit kappa, mass, reference_energy, and reference_length, each
+    a pint quantity or None. Explicit values override the preset. `potential`
+    supplies the default reference length (design 1.3); `first_energy` is the
+    first beam energy, the fallback for E_ref (design 1.2).
     """
-    # Imported here rather than at module top so that presets.py can
-    # import `quantity` from this module without a cycle.
+    # Imported here rather than at module top so that presets.py can import
+    # `quantity` from this module without a cycle.
     from scattering.core.presets import PRESETS
 
     preset = None
@@ -137,8 +136,8 @@ def build_scales(potential_table, potential, first_energy):
         raise ValueError('no Coulomb strength: give [potential].kappa or '
                          'a preset')
     if kappa is None:
-        # Gravity: kappa is proportional to the projectile mass, so
-        # the orbit does not depend on it and a dummy mass serves.
+        # Gravity: kappa is proportional to the projectile mass, so the orbit
+        # does not depend on it and a dummy mass serves.
         mass = mass or quantity(1.0, 'kg')
         kappa = kappa_per_mass * mass
     if mass is None:
@@ -171,18 +170,17 @@ def build_scales(potential_table, potential, first_energy):
     time = reference_length / speed
     display_units = dict(from_preset('display_units') or {})
     return ReferenceScales(mass, reference_energy, reference_length,
-                           speed.to_base_units(), time.to_base_units(),
-                           (mass * speed * reference_length).to_base_units(),
-                           display_units)
+        speed.to_base_units(), time.to_base_units(),
+        (mass * speed * reference_length).to_base_units(), display_units)
 
 
 def to_natural(value, dimension, scales):
     """Convert one quantity to natural units (pseudocode 1.4).
 
-    A bare number is returned as is: the run file's convention is that
-    a number with no unit is already in natural units (design 10.3).
-    A string or pint quantity is parsed, checked against the named
-    dimension, and divided by that dimension's reference scale.
+    A bare number is returned as is: the run file's convention is that a number
+    with no unit is already in natural units (design 10.3). A string or pint
+    quantity is parsed, checked against the named dimension, and divided by that
+    dimension's reference scale.
     """
     if is_bare(value):
         return float(value)

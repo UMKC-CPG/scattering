@@ -5,9 +5,8 @@ import numpy as np
 import pytest
 
 from scattering.core.presets import PRESETS
-from scattering.core.units import (build_scales, format_natural,
-                                   from_natural, quantity, to_natural,
-                                   to_natural_list)
+from scattering.core.units import (build_scales, format_natural, from_natural,
+    quantity, to_natural, to_natural_list)
 from scattering.core import natural_units
 from scattering.potentials import CoulombPotential
 from scattering.run.run_spec import PotentialSpec

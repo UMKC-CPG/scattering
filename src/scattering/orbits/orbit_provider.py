@@ -2,17 +2,16 @@
 (pseudocode 4.1-4.4, design 4.2).
 
 One operation: given a potential, an energy, and an impact
-parameter, return an `Orbit`. `AnalyticProvider` uses a potential's
-closed-form orbit; `NumericalProvider` integrates the equations of
-motion. Every consumer sees only the `Orbit` and may not ask which
-provider produced it (VISION P12). The driver chooses by capability.
+parameter, return an `Orbit`. `AnalyticProvider` uses a potential's closed-form
+orbit; `NumericalProvider` integrates the equations of motion. Every consumer
+sees only the `Orbit` and may not ask which provider produced it (VISION P12).
+The driver chooses by capability.
 
-Orbit time versus scene time: every `Orbit` method takes ORBIT time,
-whose zero is the provider's convenience (pericenter for the
-analytic provider, the start of integration for the numerical one).
-Scene time, on which the whole beam is one planar pulse at t = 0, is
-orbit time minus `time_offset`; the results store does that
-subtraction and nothing here knows about scene time (design 4.6).
+Orbit time versus scene time: every `Orbit` method takes ORBIT time, whose zero
+is the provider's convenience (pericenter for the analytic provider, the start
+of integration for the numerical one). Scene time, on which the whole beam is
+one planar pulse at t = 0, is orbit time minus `time_offset`; the results store
+does that subtraction and nothing here knows about scene time (design 4.6).
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -28,8 +27,8 @@ from scattering.core.natural_units import (angular_momentum,
 from scattering.orbits.equations_of_motion import equations_of_motion
 from scattering.orbits.integrators import exit_event, integrate
 
-# Number of dense-output samples on which the numerical provider
-# measures its conservation drift (pseudocode 4.3).
+# Number of dense-output samples on which the numerical provider measures its
+# conservation drift (pseudocode 4.3).
 _DRIFT_SAMPLES = 512
 
 
@@ -54,9 +53,9 @@ class OrbitSettings:
 class Orbit:
     """One particle's orbit (pseudocode 4.1). Times are orbit times.
 
-    `state_at(times)` returns an (n, 4) array of (x_p, y_p, v_x, v_y)
-    in the beam frame; `trace()` returns an (m, 2) polyline of the
-    path, dense where it curves (design 4.10).
+    `state_at(times)` returns an (n, 4) array of (x_p, y_p, v_x, v_y) in the
+    beam frame; `trace()` returns an (m, 2) polyline of the path, dense where it
+    curves (design 4.10).
     """
     energy: float
     impact: float
@@ -95,10 +94,10 @@ class AnalyticProvider:
                                        entry_time, settings, energy)
 
         def trace():
-            # Uniform in the pericenter-frame polar angle between the
-            # entry and exit, which is dense at pericenter by
-            # construction (design 4.10). The head-on orbit is a
-            # radial line in and out, for which r(phi) is undefined.
+            # Uniform in the pericenter-frame polar angle between the entry and
+            # exit, which is dense at pericenter by construction (design 4.10).
+            # The head-on orbit is a radial line in and out, for which r(phi) is
+            # undefined.
             if impact == 0.0:
                 return np.array([[0.0, -settings.r_max],
                                  [0.0, -analytic.turning_point]])
@@ -110,10 +109,9 @@ class AnalyticProvider:
             return np.stack(analytic.beam_frame_polar(polar), axis=-1)
 
         exit_state = state_at([exit_time])[0]
-        return Orbit(float(energy), float(impact), analytic.turning_point,
-                     0.0, analytic.pericenter_direction(), time_offset,
-                     entry_time, exit_time, exit_state, 0.0, 0.0,
-                     self.name, state_at, trace)
+        return Orbit(float(energy), float(impact), analytic.turning_point, 0.0,
+            analytic.pericenter_direction(), time_offset, entry_time, exit_time,
+            exit_state, 0.0, 0.0, self.name, state_at, trace)
 
 
 class NumericalProvider:
@@ -132,8 +130,8 @@ class NumericalProvider:
         def state_at(times):
             return solution.sol(times).T
 
-        # Pericenter: the step of minimum r brackets the root of the
-        # radial velocity r . v, refined on the dense output.
+        # Pericenter: the step of minimum r brackets the root of the radial
+        # velocity r . v, refined on the dense output.
         pericenter_time = _locate_pericenter(solution, exit_time)
         x_p, y_p = state_at([pericenter_time])[0, :2]
         r_min = float(np.hypot(x_p, y_p))
@@ -149,9 +147,9 @@ class NumericalProvider:
             return adaptive_trace(solution, settings)
 
         return Orbit(float(energy), float(impact), r_min, pericenter_time,
-                     pericenter_direction, time_offset, 0.0, exit_time,
-                     state_at([exit_time])[0], energy_drift, angmom_drift,
-                     self.name, state_at, trace)
+            pericenter_direction, time_offset, 0.0, exit_time,
+            state_at([exit_time])[0], energy_drift, angmom_drift, self.name,
+            state_at, trace)
 
 
 def choose_provider(potential, settings):
@@ -178,10 +176,10 @@ def initial_state(potential, energy, impact, settings,
     Exact start: on the true orbit at r = R_max, when the potential
     has a closed form -- no finite-radius error at all. Corrected
     start otherwise: on the straight asymptote with the speed set so
-    the TOTAL energy is exactly E, eq. (4.2); this removes the
-    wrong-energy half of the finite-radius effect and leaves the
-    exterior deflection, which the residual readout discloses.
-    `force_corrected` is a test hook for measuring that residual.
+    the TOTAL energy is exactly E, eq. (4.2); this removes the wrong-energy half
+    of the finite-radius effect and leaves the exterior deflection, which the
+    residual readout discloses. `force_corrected` is a test hook for measuring
+    that residual.
     """
     r_max = settings.r_max
     if potential.has_closed_form_orbit and not force_corrected:
@@ -206,12 +204,11 @@ def entry_plane_time(entry_state, entry_time, settings, energy):
     """The orbit time at which the particle crosses the entry plane
     y_p = -Z_0 (design 4.6, eq. 4.5).
 
-    With the plane tangent to the sphere (Z_0 = R_max), every
-    particle with b > 0 is still outside the sphere when it crosses,
-    so the crossing lies on the straight inbound leg the scene draws
-    and is an extrapolation from the entry state at the asymptotic
-    speed -- exact for that leg, and needing no root-find. The
-    head-on particle crosses exactly as it enters.
+    With the plane tangent to the sphere (Z_0 = R_max), every particle with b >
+    0 is still outside the sphere when it crosses, so the crossing lies on the
+    straight inbound leg the scene draws and is an extrapolation from the entry
+    state at the asymptotic speed -- exact for that leg, and needing no
+    root-find. The head-on particle crosses exactly as it enters.
     """
     y_entry = entry_state[1]
     return entry_time - (y_entry + settings.entry_plane_z) \
@@ -232,8 +229,8 @@ def _locate_pericenter(solution, exit_time):
         return x_p * v_x + y_p * v_y
 
     if radial_velocity(low) * radial_velocity(high) > 0.0:
-        # The minimum is at an end of the bracket (a head-on orbit
-        # sampled exactly at its turning point, say); take it.
+        # The minimum is at an end of the bracket (a head-on orbit sampled
+        # exactly at its turning point, say); take it.
         return float(solution.t[index])
     return float(brentq(radial_velocity, low, high, xtol=1e-13))
 

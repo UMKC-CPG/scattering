@@ -1,11 +1,10 @@
 """The per-particle energy (pseudocode 3.6): the hook for a future
 continuous energy spread (VISION FD2, design 3.2).
 
-In the first version every particle at energy index k has exactly
-the k-th listed energy, so this is trivial -- and it is called
-anyway from the driver, so that a distribution later is a new branch
-here and nothing else. The results store keys on the energy INDEX,
-which survives the generalization.
+In the first version every particle at energy index k has exactly the k-th
+listed energy, so this is trivial -- and it is called anyway from the driver, so
+that a distribution later is a new branch here and nothing else. The results
+store keys on the energy INDEX, which survives the generalization.
 
 Attribution: this module is part of the scattering teaching tool.
 """

@@ -3,13 +3,12 @@ triples and the units a student should see results in.
 
 Design section 1.5 ships two presets, one of each sign of the
 Coulomb strength: `alpha_on_gold` (Rutherford's experiment) and
-`interstellar_visitor` (a hyperbolic pass by the Sun). A run file
-selects one by name and may override any single value (design
-10.3). Every physical constant here is read from `scipy.constants`
-at import time rather than typed in, because a hand-copied constant
-is a transcription error waiting to be found (design 1.4). The one
-exception is the solar gravitational parameter, which SciPy does not
-carry; it is the IAU 2015 nominal value, cited where it is defined.
+`interstellar_visitor` (a hyperbolic pass by the Sun). A run file selects one by
+name and may override any single value (design 10.3). Every physical constant
+here is read from `scipy.constants` at import time rather than typed in, because
+a hand-copied constant is a transcription error waiting to be found (design
+1.4). The one exception is the solar gravitational parameter, which SciPy does
+not carry; it is the IAU 2015 nominal value, cited where it is defined.
 
 This module imports pint through `units.py` only, and holds no
 physics: it is data.
@@ -25,9 +24,9 @@ from scipy import constants
 
 from scattering.core.units import Quantity, quantity
 
-# IAU 2015 Resolution B3, nominal solar mass parameter GM_sun in
-# m^3 s^-2. Not available in scipy.constants, hence the one typed
-# literal in this file; the resolution is the citation.
+# IAU 2015 Resolution B3, nominal solar mass parameter GM_sun in m^3 s^-2. Not
+# available in scipy.constants, hence the one typed literal in this file; the
+# resolution is the citation.
 GM_SUN_M3_PER_S2 = 1.3271244e20
 
 
@@ -35,12 +34,11 @@ GM_SUN_M3_PER_S2 = 1.3271244e20
 class Preset:
     """A preset's data, per pseudocode 1.1.
 
-    Exactly one of `kappa` and `kappa_per_mass` is set. When
-    `kappa_per_mass` is set (gravity), the orbit is independent of
-    the projectile mass, `mass` may be None, and the driver assigns
-    a dummy unit mass that is never displayed. `reference_energy`
-    may be None if `v_inf` is given, in which case the reference
-    energy is the kinetic energy at that speed.
+    Exactly one of `kappa` and `kappa_per_mass` is set. When `kappa_per_mass` is
+    set (gravity), the orbit is independent of the projectile mass, `mass` may
+    be None, and the driver assigns a dummy unit mass that is never displayed.
+    `reference_energy` may be None if `v_inf` is given, in which case the
+    reference energy is the kinetic energy at that speed.
     """
     name: str
     kind: str

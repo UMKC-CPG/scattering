@@ -2,24 +2,22 @@
 
 Three are offered, selected per run:
 
-  dop853   Dormand-Prince 8(5,3), adaptive, dense output. Production.
-  rk45     Dormand-Prince 4(5), adaptive, dense output. Cheaper.
-  verlet   Velocity Verlet, fixed step, second order, symplectic.
-           A teaching option: its energy error is visibly bounded
-           rather than secular, and a coarse step makes the drift
-           readout move (VISION P2).
+- dop853: Dormand-Prince 8(5,3), adaptive, dense output. Production.
+- rk45: Dormand-Prince 4(5), adaptive, dense output. Cheaper.
+- verlet: velocity Verlet, fixed step, second order, symplectic. A
+  teaching option: its energy error is visibly bounded rather than
+  secular, and a coarse step makes the drift readout move (P2).
 
-The adaptive schemes are scipy's `solve_ivp` with `dense_output`,
-which is what lets the entry-plane crossing, the pericenter, and the
-exit be LOCATED to tolerance rather than to a sample spacing. Every
-scheme returns an object exposing `.t` (its own step times) and
-`.sol(t)` (state at any time), and nothing else, so the provider is
-indifferent to which ran.
+The adaptive schemes are scipy's `solve_ivp` with `dense_output`, which is what
+lets the entry-plane crossing, the pericenter, and the exit be LOCATED to
+tolerance rather than to a sample spacing. Every scheme returns an object
+exposing `.t` (its own step times) and `.sol(t)` (state at any time), and
+nothing else, so the provider is indifferent to which ran.
 
-Integration stops at the event r = R_max crossed OUTWARD. A safety
-cap on the span guards against an orbit that never exits, which is
-impossible for E > 0 in a potential that vanishes at infinity and
-therefore a sign of a bad potential implementation.
+Integration stops at the event r = R_max crossed OUTWARD. A safety cap on the
+span guards against an orbit that never exits, which is impossible for E > 0 in
+a potential that vanishes at infinity and therefore a sign of a bad potential
+implementation.
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -28,8 +26,8 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import CubicHermiteSpline
 
-# The span cap, as a multiple of the free-flight crossing time of
-# the sphere (design 4.9).
+# The span cap, as a multiple of the free-flight crossing time of the sphere
+# (design 4.9).
 _SPAN_CAP_FACTOR = 20.0
 
 _SCIPY_METHODS = {'dop853': 'DOP853', 'rk45': 'RK45'}
@@ -61,9 +59,9 @@ class DenseSolution:
 
 class HermiteSolution:
     """Adapter over fixed-step samples: `.sol(t)` is a per-interval
-    cubic Hermite using the stored velocities as slopes for the
-    positions, and a plain cubic through the velocities. Good enough
-    for locating the plane crossing and pericenter between steps,
+    cubic Hermite using the stored velocities as slopes for the positions, and a
+    plain cubic through the velocities. Good enough for locating the plane
+    crossing and pericenter between steps,
     and the display says 'interpolated' when this is in use."""
 
     def __init__(self, times, states, t_exit):
@@ -72,8 +70,7 @@ class HermiteSolution:
         self.t_exit = float(t_exit)
         self._position = CubicHermiteSpline(self.t, states[:, :2],
                                             states[:, 2:], axis=0)
-        self._velocity = CubicHermiteSpline(
-            self.t, states[:, 2:],
+        self._velocity = CubicHermiteSpline(self.t, states[:, 2:],
             np.gradient(states[:, 2:], self.t, axis=0), axis=0)
 
     def sol(self, times):
@@ -90,9 +87,8 @@ def integrate(right_hand_side, initial_state, settings, stop):
     t_cap = _SPAN_CAP_FACTOR * settings.r_max / speed
     if settings.integrator in _SCIPY_METHODS:
         result = solve_ivp(right_hand_side, (0.0, t_cap), initial_state,
-                           method=_SCIPY_METHODS[settings.integrator],
-                           rtol=settings.rtol, atol=settings.atol,
-                           dense_output=True, events=stop)
+            method=_SCIPY_METHODS[settings.integrator], rtol=settings.rtol,
+            atol=settings.atol, dense_output=True, events=stop)
         if result.status != 1:
             raise RuntimeError('orbit did not exit R_max before the span '
                                'cap: is the potential implemented '

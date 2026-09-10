@@ -1,10 +1,10 @@
 """The beam records (pseudocode 3.1).
 
-`BeamSpec` is what the run file says; `Beam` is what was generated
-from it, frozen, with one entry per particle. The generated record
-carries the sampled impact parameters and azimuths themselves, not
-merely the seed that produced them: the seed is the source of
-reproducibility and the samples are its proof (design 3.5).
+`BeamSpec` is what the run file says; `Beam` is what was generated from it,
+frozen, with one entry per particle. The generated record carries the sampled
+impact parameters and azimuths themselves, not merely the seed that produced
+them: the seed is the source of reproducibility and the samples are its proof
+(design 3.5).
 
 Attribution: this module is part of the scattering teaching tool.
 Derived code should cite it.
@@ -30,11 +30,11 @@ class AnnulusSpec:
 class BeamSpec:
     """The resolved [beam] table in natural units.
 
-    `energies` is the sweep, in run-file order (design 3.2). Exactly
-    one of the two layouts applies: `annuli` for the teaching
-    picture, or `disc` with `n_particles`, `b_min`, `b_max`, and a
-    required `seed` for uniform flux. `distribution` is the FD2 hook
-    and only "delta" is accepted in the first version.
+    `energies` is the sweep, in run-file order (design 3.2). Exactly one of the
+    two layouts applies: `annuli` for the teaching picture, or `disc` with
+    `n_particles`, `b_min`, `b_max`, and a required `seed` for uniform flux.
+    `distribution` is the FD2 hook and only "delta" is accepted in the first
+    version.
     """
     energies: np.ndarray
     layout: str
@@ -69,11 +69,10 @@ def _read_only(array):
 class Beam:
     """The generated beam (design 3.6). Every array is read-only.
 
-    `theta_min` and `theta_head` -- the smallest and largest
-    scattering angles the beam can produce at each energy -- are
-    consequences of the beam and the potential together, so they
-    are filled in by the driver after the deflection stage has run
-    (pseudocode 5.5, 6.4); they are NaN until then.
+    `theta_min` and `theta_head` -- the smallest and largest scattering angles
+    the beam can produce at each energy -- are consequences of the beam and the
+    potential together, so they are filled in by the driver after the deflection
+    stage has run (pseudocode 5.5, 6.4); they are NaN until then.
     """
     energies: np.ndarray
     impact_parameter: np.ndarray
@@ -110,7 +109,6 @@ class Beam:
         """A copy with the measured range filled in (the one field
         the driver adds after generation)."""
         return Beam(self.energies, self.impact_parameter, self.azimuth,
-                    self.annulus_index, self.annulus_width, self.flux,
-                    self.layout, self.seed, self.stratify,
-                    np.asarray(theta_min, dtype=float),
-                    np.asarray(theta_head, dtype=float))
+            self.annulus_index, self.annulus_width, self.flux, self.layout,
+            self.seed, self.stratify, np.asarray(theta_min, dtype=float),
+            np.asarray(theta_head, dtype=float))

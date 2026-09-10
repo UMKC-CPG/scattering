@@ -1,16 +1,16 @@
 """Placing an orbital plane in the three-dimensional scene
 (pseudocode 4.8, design 4.8).
 
-Each particle's plane contains the beam axis z and the particle's
-transverse direction e_rho = (cos phi, sin phi, 0), where phi is its
-beam azimuth. In-plane coordinates (x_p, y_p) map to the scene by
+Each particle's plane contains the beam axis z and the particle's transverse
+direction e_rho = (cos phi, sin phi, 0), where phi is its beam azimuth. In-plane
+coordinates (x_p, y_p) map to the scene by
 
 ##   r = x_p e_rho + y_p z = (x_p cos phi, x_p sin phi, y_p)     (4.3)
 
-Repulsion pushes x_p more positive (away from the axis); attraction
-pulls it negative, so an attracted particle crosses the axis and
-leaves on the FAR side. A detector that bins only the polar angle
-cannot see which -- VISION G8 in its geometric form.
+Repulsion pushes x_p more positive (away from the axis); attraction pulls it
+negative, so an attracted particle crosses the axis and leaves on the FAR side.
+A detector that bins only the polar angle cannot see which -- VISION G8 in its
+geometric form.
 
 Attribution: this module is part of the scattering teaching tool.
 """

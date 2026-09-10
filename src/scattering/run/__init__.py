@@ -1,10 +1,9 @@
 """The reproducible unit of work: the run specification, the driver
-that runs the forward chain from it, and the results store the
-driver fills.
+that runs the forward chain from it, and the results store the driver fills.
 
-Governed by pseudocode section 6 (store and driver) and, once
-written, section 10 (the run file). In v0.5 a RunSpec is built
-directly in code; the TOML path arrives with pseudocode 10.
+Governed by pseudocode section 6 (store and driver) and, once written, section
+10 (the run file). In v0.5 a RunSpec is built directly in code; the TOML path
+arrives with pseudocode 10.
 """
 
 from scattering.run.run_spec import (FidelitySpec, PotentialSpec,

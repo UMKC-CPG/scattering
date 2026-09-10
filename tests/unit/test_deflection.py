@@ -5,9 +5,8 @@ import pytest
 
 from scattering.beam import AnnulusSpec, BeamSpec, generate_beam
 from scattering.deflection import (annulus_map, build_cross_section_table,
-                                   build_deflection_table,
-                                   deflection_by_quadrature, mirror_check,
-                                   particle_outputs)
+    build_deflection_table, deflection_by_quadrature, mirror_check,
+    particle_outputs)
 from scattering.orbits import turning_point_from_g
 from scattering.potentials import CoulombPotential
 from scattering.potentials.coulomb import (rutherford_cross_section,
@@ -54,14 +53,14 @@ class BarrierPotential(CoulombPotential):
 
 def test_orbiting_is_detected_on_a_barrier():
     """Orbiting happens where the effective potential's barrier top
-    equals the energy (design 5.2). The bare potential has a barrier
-    of height ~0.157 at r ~ 2.6, so at E = 0.2 the head-on particle
-    passes over it and a growing impact parameter raises the barrier
+    equals the energy (design 5.2). The bare potential has a barrier of height
+    ~0.157 at r ~ 2.6, so at E = 0.2 the head-on particle passes over it and a
+    growing impact parameter raises the barrier
     until its top reaches E: solve for that critical b, then the
-    largest root of g is double and the detector must flag it, or
-    the deflection must come out infinite. (At higher energy the
-    barrier merges with the well before its top reaches E and no
-    orbiting occurs; 0.16 sits just above the bare barrier's 0.157.)
+    largest root of g is double and the detector must flag it, or the deflection
+    must come out infinite. (At higher energy the barrier merges with the well
+    before its top reaches E and no orbiting occurs; 0.16 sits just above the
+    bare barrier's 0.157.)
     """
     from scipy.optimize import brentq
     potential = BarrierPotential()
@@ -69,8 +68,8 @@ def test_orbiting_is_detected_on_a_barrier():
     radii = np.geomspace(1.2, 40.0, 8000)
 
     def barrier_minus_energy(impact):
-        # V_eff = V + E b^2 / r^2 (unit mass, L^2 = 2 E b^2); the
-        # barrier is the largest INTERIOR local maximum.
+        # V_eff = V + E b^2 / r^2 (unit mass, L^2 = 2 E b^2); the barrier is the
+        # largest INTERIOR local maximum.
         effective = (potential.value(radii)
                      + energy * impact ** 2 / radii ** 2)
         interior = (effective[1:-1] > effective[:-2]) \
@@ -106,9 +105,8 @@ def test_non_monotone_table_is_refused():
     bent = table.deflection.copy()
     bent[10] = bent[9] + 0.1
     from scattering.deflection.deflection_function import DeflectionTable
-    bad = DeflectionTable(table.energy, table.impact, bent,
-                          table.d_deflection, table.turning_point, False,
-                          table.source, table.check)
+    bad = DeflectionTable(table.energy, table.impact, bent, table.d_deflection,
+        table.turning_point, False, table.source, table.check)
     with pytest.raises(ValueError):
         build_cross_section_table(bad)
 

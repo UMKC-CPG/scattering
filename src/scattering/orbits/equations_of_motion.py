@@ -1,14 +1,13 @@
 """The planar equations of motion in a central potential (pseudocode
 4.5, design 4.3).
 
-Central-force motion is planar, so each particle is integrated in
-its own orbital plane as a two-degree-of-freedom problem. The
-coordinates are Cartesian in that plane -- x_p transverse to the
-beam, y_p along it -- rather than polar, because dphi/dt = L / r^2
-is stiff at the small-b attractive pericenter and the radial
-equation has a coordinate singularity at r = 0; Cartesian
-coordinates have neither (design 4.11). The polar coordinates the
-display shows are derived from the state afterwards.
+Central-force motion is planar, so each particle is integrated in its own
+orbital plane as a two-degree-of-freedom problem. The coordinates are Cartesian
+in that plane -- x_p transverse to the beam, y_p along it -- rather than polar,
+because dphi/dt = L / r^2 is stiff at the small-b attractive pericenter and the
+radial equation has a coordinate singularity at r = 0; Cartesian coordinates
+have neither (design 4.11). The polar coordinates the display shows are derived
+from the state afterwards.
 
 With unit mass (design 1.2) the acceleration is -dV/dr times the
 unit radial vector:
@@ -30,8 +29,8 @@ def equations_of_motion(potential):
     def right_hand_side(_time, state):
         x_position, y_position, x_velocity, y_velocity = state
         radius = np.hypot(x_position, y_position)
-        # Radial acceleration divided by r, so that multiplying by
-        # each coordinate gives that coordinate's acceleration.
+        # Radial acceleration divided by r, so that multiplying by each
+        # coordinate gives that coordinate's acceleration.
         radial_over_r = -potential.derivative(radius) / radius
         return [x_velocity, y_velocity,
                 radial_over_r * x_position, radial_over_r * y_position]

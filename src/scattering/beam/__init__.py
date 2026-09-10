@@ -1,9 +1,8 @@
 """The beam: the complete set of initial conditions for a run.
 
-Governed by pseudocode section 3 and design section 3. A beam is
-plain data -- energies, impact parameters, azimuths, and how they
-were laid out -- and nothing downstream knows anything else about
-where the particles came from.
+Governed by pseudocode section 3 and design section 3. A beam is plain data --
+energies, impact parameters, azimuths, and how they were laid out -- and nothing
+downstream knows anything else about where the particles came from.
 """
 
 from scattering.beam.beam_spec import AnnulusSpec, Beam, BeamSpec

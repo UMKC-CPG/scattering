@@ -12,26 +12,25 @@ in a single call:
 ##   phase      [K, N, S]        -1 inbound free flight, 0 orbit,
 ##                               +1 outbound free flight
 
-plus the per-particle, per-energy, and provenance blocks of design
-6.3. With n_samples = 0 the trajectory block is absent: that is the
-batch mode, in which a million particles need no trajectory because
-the detector and the inversion consume only the per-particle block.
+plus the per-particle, per-energy, and provenance blocks of design 6.3. With
+n_samples = 0 the trajectory block is absent: that is the batch mode, in which a
+million particles need no trajectory because the detector and the inversion
+consume only the per-particle block.
 
-The store is FROZEN after the driver fills it: every array is
-read-only and no attribute may be reassigned. That is VISION P5 in
-code, and it is what makes the determinism test mechanical -- scrub
-the store in any order and nothing changes (ARCHITECTURE 8.6(3)).
+The store is FROZEN after the driver fills it: every array is read-only and no
+attribute may be reassigned. That is VISION P5 in code, and it is what makes the
+determinism test mechanical -- scrub the store in any order and nothing changes
+(ARCHITECTURE 8.6(3)).
 
 Attribution: this module is part of the scattering teaching tool.
 """
 
 import numpy as np
 
-# Bytes per (K, N, S) sample: position, velocity, polar as float64
-# plus phase as int8 (design 6.4, eq. 6.1).
+# Bytes per (K, N, S) sample: position, velocity, polar as float64 plus phase as
+# int8 (design 6.4, eq. 6.1).
 _BYTES_PER_SAMPLE = (3 + 3 + 2) * 8 + 1
-# Bytes per (K, N) per-particle entry: eight floats, one 3-vector,
-# two ints.
+# Bytes per (K, N) per-particle entry: eight floats, one 3-vector, two ints.
 _BYTES_PER_PARTICLE = 8 * 8 + 3 * 8 + 2 * 8
 
 
@@ -83,8 +82,7 @@ class ResultsStore:
         store.azimuth = np.empty(N)
         store.annulus_index = np.empty(N, dtype=int)
         for name in ('turning_point', 'turning_point_q', 'deflection',
-                     'time_offset', 'energy_drift', 'angmom_drift',
-                     'finite_radius'):
+            'time_offset', 'energy_drift', 'angmom_drift', 'finite_radius'):
             setattr(store, name, np.empty((K, N)))
         store.out_direction = np.empty((K, N, 3))
         store.entry_index = np.empty((K, N), dtype=int)

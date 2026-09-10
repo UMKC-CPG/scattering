@@ -1,16 +1,17 @@
 """The driver: the forward chain, in order, from a run specification
-to a frozen results store (pseudocode 6.4-6.5, ARCHITECTURE 2 and
-4.10).
+to a frozen results store (pseudocode 6.4-6.5, ARCHITECTURE 2 and 4.10).
 
 This is the one module that knows the sequence of stages:
 
-  potential -> scales -> beam -> [per energy: deflection tables,
-  per-particle outputs, orbits, samples, traces] -> freeze.
+- potential, scales, beam;
+- per energy: deflection tables, per-particle outputs, orbits,
+  samples, traces;
+- freeze.
 
-The deflection stage runs BEFORE the orbits at each energy, because
-it is cheap and because it fixes the asymptotic out-direction each
-orbit's outbound free flight must follow (design 4.6-4.7). Nothing
-here computes physics; it calls the stages and lays the results out.
+The deflection stage runs BEFORE the orbits at each energy, because it is cheap
+and because it fixes the asymptotic out-direction each orbit's outbound free
+flight must follow (design 4.6-4.7). Nothing here computes physics; it calls the
+stages and lays the results out.
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -28,8 +29,7 @@ from scattering.core.natural_units import asymptotic_speed
 from scattering.core.units import (build_scales, to_natural,
                                    to_natural_list)
 from scattering.deflection import (annulus_map, build_cross_section_table,
-                                   build_deflection_table, mirror_check,
-                                   particle_outputs)
+    build_deflection_table, mirror_check, particle_outputs)
 from scattering.orbits import OrbitSettings, choose_provider, embed
 from scattering.potentials import make_potential
 from scattering.run.results_store import ResultsStore, estimate_bytes
@@ -45,10 +45,8 @@ def check_budget(spec, rc):
         n_particles = sum(ring.n_azimuth for ring in spec.beam.annuli)
     else:
         n_particles = spec.beam.n_particles
-    estimate = estimate_bytes(n_energies, n_particles,
-                              spec.fidelity.n_samples,
-                              spec.fidelity.trace_points_max,
-                              spec.fidelity.n_deflection_points)
+    estimate = estimate_bytes(n_energies, n_particles, spec.fidelity.n_samples,
+        spec.fidelity.trace_points_max, spec.fidelity.n_deflection_points)
     if estimate > rc.max_store_bytes:
         raise MemoryError(
             f'estimated results store of {estimate / 1e9:.2f} GB exceeds '
@@ -66,20 +64,18 @@ def resolve_beam_units(beam_spec, scales):
                                to_natural(ring.width, 'length', scales),
                                int(ring.n_azimuth))
                    for ring in beam_spec.annuli)
-    return BeamSpec(energies, beam_spec.layout, annuli,
-                    beam_spec.n_particles,
-                    to_natural(beam_spec.b_min, 'length', scales),
-                    to_natural(beam_spec.b_max, 'length', scales),
-                    beam_spec.stratify, beam_spec.seed,
-                    beam_spec.distribution)
+    return BeamSpec(energies, beam_spec.layout, annuli, beam_spec.n_particles,
+        to_natural(beam_spec.b_min, 'length', scales),
+        to_natural(beam_spec.b_max, 'length', scales), beam_spec.stratify,
+        beam_spec.seed, beam_spec.distribution)
 
 
 def build_results_store(spec, rc=None, progress=None):
     """Run the forward chain and return a frozen ResultsStore.
 
-    `progress(energy_index, particle_index)` is called after each
-    orbit, for a progress bar. The order of stages is the whole
-    content of this function; see the module docstring.
+    `progress(energy_index, particle_index)` is called after each orbit, for a
+    progress bar. The order of stages is the whole content of this function; see
+    the module docstring.
     """
     rc = rc or RcSettings()
     potential = make_potential(spec.potential)
@@ -94,15 +90,13 @@ def build_results_store(spec, rc=None, progress=None):
     if r_max <= largest_impact:
         raise ValueError(f'r_max = {r_max} must exceed the beam\'s largest '
                          f'impact parameter {largest_impact}')
-    settings = OrbitSettings(
-        r_max=r_max, integrator=spec.fidelity.integrator,
+    settings = OrbitSettings(r_max=r_max, integrator=spec.fidelity.integrator,
         rtol=spec.fidelity.rtol, atol=spec.fidelity.atol,
         step=spec.fidelity.step,
         asymptote_tolerance=spec.fidelity.asymptote_tolerance,
         trace_angle=np.radians(spec.fidelity.trace_angle_deg),
         trace_points_max=spec.fidelity.trace_points_max,
-        orbit_provider=spec.fidelity.orbit_provider,
-        entry_plane_z=r_max)
+        orbit_provider=spec.fidelity.orbit_provider, entry_plane_z=r_max)
     provider = choose_provider(potential, settings)
     r_detect = spec.detector_radius * r_max
 
@@ -119,14 +113,13 @@ def build_results_store(spec, rc=None, progress=None):
     for k in range(n_energies):
         energy = beam.energies[k]
         # --- Deflection stage (pseudocode 5), first.
-        table = build_deflection_table(
-            potential, energy, float(beam.impact_parameter.min()),
+        table = build_deflection_table(potential, energy,
+            float(beam.impact_parameter.min()),
             float(beam.impact_parameter.max()),
             spec.fidelity.n_deflection_points, potential.admits_center())
         xsec = build_cross_section_table(table)
-        mirror, mirror_diff = mirror_check(
-            potential, energy, table, spec.fidelity.n_deflection_points,
-            potential.admits_center())
+        mirror, mirror_diff = mirror_check(potential, energy, table,
+            spec.fidelity.n_deflection_points, potential.admits_center())
         outputs = particle_outputs(potential, energy, beam)
         store.deflection[k] = outputs['deflection']
         store.out_direction[k] = outputs['out_direction']
@@ -280,11 +273,9 @@ def _git_commit():
     root = Path(__file__).resolve().parents[3]
     try:
         commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root,
-                                capture_output=True, text=True,
-                                check=True).stdout.strip()
+            capture_output=True, text=True, check=True).stdout.strip()
         dirty = subprocess.run(['git', 'status', '--porcelain'], cwd=root,
-                               capture_output=True, text=True,
-                               check=True).stdout.strip() != ''
+            capture_output=True, text=True, check=True).stdout.strip() != ''
         return commit + ('-dirty' if dirty else '')
     except (OSError, subprocess.CalledProcessError):
         return None

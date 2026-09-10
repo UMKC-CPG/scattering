@@ -16,17 +16,16 @@ The substitution r = r_min + rho^2 removes it:
 whose integrand is smooth on [0, inf) and decays as rho^-3, so
 `scipy.integrate.quad` converges to tolerance. The sign comes out by
 itself: an attractive potential sweeps more than pi / 2 and gives
-Theta < 0 with no case analysis. Verified against the Rutherford
-closed form to 2e-12 in dev/spikes/coulomb_closed_forms.py.
+Theta < 0 with no case analysis. Verified against the Rutherford closed form to
+2e-12 in dev/spikes/coulomb_closed_forms.py.
 
-Every particle's Theta is evaluated directly at its own b -- never
-interpolated from a table -- because it is what places the particle
-on the detector (design 5.4).
+Every particle's Theta is evaluated directly at its own b -- never interpolated
+from a table -- because it is what places the particle on the detector (design
+5.4).
 
 Attribution: the deflection integral follows Goldstein, Poole and
-Safko section 3.10 and Landau and Lifshitz section 18. This module
-is part of the scattering teaching tool; derived code should cite
-it and those sources.
+Safko section 3.10 and Landau and Lifshitz section 18. This module is part of
+the scattering teaching tool; derived code should cite it and those sources.
 """
 
 from dataclasses import dataclass
@@ -38,13 +37,13 @@ from scattering.orbits.embedding import out_direction
 from scattering.orbits.turning_point import (g_derivative, g_function,
                                              turning_point_from_g)
 
-# Relative half-width of the centered difference for dTheta/db
-# (design 5.4): its O(delta^2) truncation sits below the quadrature
-# tolerance, as the spike measured (7e-9 in the cross section).
+# Relative half-width of the centered difference for dTheta/db (design 5.4): its
+# O(delta^2) truncation sits below the quadrature tolerance, as the spike
+# measured (7e-9 in the cross section).
 _DERIVATIVE_DELTA = 1e-4
 
-# The floor of the log-spaced impact grid when the beam reaches
-# b = 0, as a fraction of b_max (pseudocode 5.4).
+# The floor of the log-spaced impact grid when the beam reaches b = 0, as a
+# fraction of b_max (pseudocode 5.4).
 _GRID_FLOOR_FRACTION = 1e-3
 
 
@@ -64,10 +63,10 @@ class DeflectionTable:
 def deflection_by_quadrature(potential, energy, impact):
     """Return (Theta, r_min, error_estimate) by eq. (5.3).
 
-    b = 0 is the head-on case, Theta = pi without evaluation, so that
-    the prefactor b = 0 never multiplies a 0 / 0 integrand. A double
-    root of g (orbiting) yields an infinite Theta with the sign of
-    the force at the turning point, and no quadrature.
+    b = 0 is the head-on case, Theta = pi without evaluation, so that the
+    prefactor b = 0 never multiplies a 0 / 0 integrand. A double root of g
+    (orbiting) yields an infinite Theta with the sign of the force at the
+    turning point, and no quadrature.
     """
     if impact == 0.0:
         r_min, _ = turning_point_from_g(potential, energy, impact)
@@ -91,8 +90,8 @@ def deflection_by_quadrature(potential, energy, impact):
         integral, error = quad(integrand, 0.0, np.inf, epsabs=1e-12,
                                epsrel=1e-12, limit=200)
     if not np.isfinite(integral):
-        # A double root the slope test did not resolve: the integral
-        # itself diverges, which is the orbiting signature (design 5.2).
+        # A double root the slope test did not resolve: the integral itself
+        # diverges, which is the orbiting signature (design 5.2).
         force_sign = -np.sign(potential.derivative(r_min))
         return float(np.copysign(np.inf, force_sign)), r_min, np.inf
     return np.pi - 4.0 * impact * integral, r_min, error
@@ -132,8 +131,8 @@ def build_deflection_table(potential, energy, b_min, b_max, n_points,
                              if b > 0.0 else np.nan for b in grid])
     turning = np.array([turning_point_from_g(potential, energy, b)[0]
                         for b in grid])
-    # |Theta| must decrease along increasing b for a monotone
-    # potential; the sign of Theta is that of its last (large-b) node.
+    # |Theta| must decrease along increasing b for a monotone potential; the
+    # sign of Theta is that of its last (large-b) node.
     magnitude = deflection * np.sign(deflection[-1])
     monotone = bool(np.all(np.diff(magnitude) <= 0.0))
     check = np.nan
@@ -165,13 +164,11 @@ def mirror_check(potential, energy, table, n_points, admits_center):
     mirror = potential.mirror()
     b_min = float(table.impact[0])
     b_max = float(table.impact[-1])
-    mirror_table = build_deflection_table(
-        mirror, energy, b_min, b_max, n_points,
-        admits_center and mirror.admits_center())
-    # One table may carry a head-on node the other cannot (the
-    # attractive mirror of a repulsive potential admits no b = 0), so
-    # the comparison is made on the positive-b nodes, which are the
-    # same log-spaced grid in both.
+    mirror_table = build_deflection_table(mirror, energy, b_min, b_max,
+        n_points, admits_center and mirror.admits_center())
+    # One table may carry a head-on node the other cannot (the attractive mirror
+    # of a repulsive potential admits no b = 0), so the comparison is made on
+    # the positive-b nodes, which are the same log-spaced grid in both.
     ours = build_cross_section_table(_positive_nodes(table))
     theirs = build_cross_section_table(_positive_nodes(mirror_table))
     ok = (ours.flags == 'ok') & (theirs.flags == 'ok')
@@ -186,15 +183,14 @@ def _positive_nodes(table):
     """The table restricted to b > 0."""
     keep = table.impact > 0.0
     return DeflectionTable(table.energy, table.impact[keep],
-                           table.deflection[keep], table.d_deflection[keep],
-                           table.turning_point[keep], table.monotone,
-                           table.source, table.check)
+        table.deflection[keep], table.d_deflection[keep],
+        table.turning_point[keep], table.monotone, table.source, table.check)
 
 
 def particle_outputs(potential, energy, beam):
     """Per-particle Theta, |Theta|, the asymptotic out-direction, and
-    the turning point from the root of g (pseudocode 5.8). The
-    out-direction is what the detector bins and what the outbound
+    the turning point from the root of g (pseudocode 5.8). The out-direction is
+    what the detector bins and what the outbound
     free flight follows (design 4.6, 4.7)."""
     deflection = particle_deflections(potential, energy,
                                       beam.impact_parameter)

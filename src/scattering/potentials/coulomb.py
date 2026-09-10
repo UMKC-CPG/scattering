@@ -1,23 +1,21 @@
 """The Coulomb potential V = s / r and its closed forms.
 
-Design section 2 collects everything that is exactly solvable about
-scattering in a 1 / r potential, in the natural units of design
-section 1 (unit mass, reference length |kappa| / E_ref so that the
-strength is exactly one, kinetic energy v^2 / 2). Pseudocode section
-2 fixes the functions. Every formula here is verified numerically by
-dev/spikes/coulomb_closed_forms.py; a change to any of them must be
-re-run through that spike.
+Design section 2 collects everything that is exactly solvable about scattering
+in a 1 / r potential, in the natural units of design section 1 (unit mass,
+reference length |kappa| / E_ref so that the strength is exactly one, kinetic
+energy v^2 / 2). Pseudocode section 2 fixes the functions. Every formula here is
+verified numerically by dev/spikes/coulomb_closed_forms.py; a change to any of
+them must be re-run through that spike.
 
 The sign convention: s = +1 is repulsive (like charges; Rutherford),
-s = -1 is attractive (gravity; unlike charges). The two are the same
-hyperbola's two branches, and the closed forms below carry `s` so
-that one function serves both.
+s = -1 is attractive (gravity; unlike charges). The two are the same hyperbola's
+two branches, and the closed forms below carry `s` so that one function serves
+both.
 
 Attribution: the closed forms follow Goldstein, Poole and Safko,
-Classical Mechanics 3rd ed. sections 3.7 and 3.10, and Landau and
-Lifshitz, Mechanics 3rd ed. sections 15 and 19; see design 2.10.
-This module is part of the scattering teaching tool; derived code
-should cite it and those sources.
+Classical Mechanics 3rd ed. sections 3.7 and 3.10, and Landau and Lifshitz,
+Mechanics 3rd ed. sections 15 and 19; see design 2.10. This module is part of
+the scattering teaching tool; derived code should cite it and those sources.
 """
 
 from dataclasses import dataclass
@@ -26,8 +24,8 @@ import numpy as np
 
 from scattering.potentials.potential_interface import Potential
 
-# Newton iterations for inverting t(H); the function is monotone and
-# nearly exponential, so this bound is never approached in practice.
+# Newton iterations for inverting t(H); the function is monotone and nearly
+# exponential, so this bound is never approached in practice.
 _MAX_NEWTON_ITERATIONS = 50
 
 
@@ -52,13 +50,13 @@ class CoulombPotential(Potential):
         return -self.sign / np.asarray(radius, dtype=float) ** 2
 
     def admits_center(self):
-        # Design 2.3: repulsive head-on turns back at r = 1 / E;
-        # attractive head-on falls to the center and is not an orbit.
+        # Design 2.3: repulsive head-on turns back at r = 1 / E; attractive
+        # head-on falls to the center and is not an orbit.
         return self.sign == +1
 
     def default_reference_length(self, kappa, reference_energy):
-        # Design 1.3: the head-on turning point at the reference
-        # energy, so that V~ = s / r~ with strength exactly one.
+        # Design 1.3: the head-on turning point at the reference energy, so that
+        # V~ = s / r~ with strength exactly one.
         return abs(kappa) / reference_energy
 
     def tail_exponent(self):
@@ -142,15 +140,14 @@ class AnalyticOrbit:
     ##   t(H)       = a^(3/2) (e sinh H + s H)
     ##   tan(phi/2) = k tanh(H/2),   k = sqrt((e - s) / (e + s))
 
-    where a = 1 / (2 E) is the semi-major axis. The coefficient k
-    collapses the two sign cases of design 2.6 into one expression.
-    All state functions return values in the PERICENTER frame, with
-    the pericenter on +x; `beam_frame_state` rotates into the beam
-    frame of design 4.3.
+    where a = 1 / (2 E) is the semi-major axis. The coefficient k collapses the
+    two sign cases of design 2.6 into one expression. All state functions return
+    values in the PERICENTER frame, with the pericenter on +x;
+    `beam_frame_state` rotates into the beam frame of design 4.3.
 
-    The provider in orbits/analytic_orbits.py uses only the methods
-    below, by name; a later potential with its own closed-form orbit
-    supplies an object with the same methods.
+    The provider in orbits/analytic_orbits.py uses only the methods below, by
+    name; a later potential with its own closed-form orbit supplies an object
+    with the same methods.
     """
     sign: int
     energy: float
@@ -198,8 +195,8 @@ class AnalyticOrbit:
 
     def anomaly_of_time(self, time):
         """Invert t(H) by Newton's method. t(H) is monotone and nearly
-        exponential in |H|, so starting from the large-|H| asymptote
-        converges in a handful of steps; the iteration cap is a guard
+        exponential in |H|, so starting from the large-|H| asymptote converges
+        in a handful of steps; the iteration cap is a guard
         against a bug, not something a valid orbit reaches."""
         time = np.asarray(time, dtype=float)
         a_three_halves = self.semi_major ** 1.5
@@ -251,11 +248,10 @@ class AnalyticOrbit:
         """The rotation taking the pericenter frame to the beam frame
         of design 4.3, where the particle arrives along +y at x = +b.
 
-        Both frames are counterclockwise (L > 0), so a pure rotation
-        suffices for either sign. The inbound velocity direction in
-        the pericenter frame is (-cos phi_inf, sin phi_inf); rotating
-        it onto (0, 1) takes alpha = phi_inf - pi / 2 (pseudocode 2.3,
-        checked numerically in both signs).
+        Both frames are counterclockwise (L > 0), so a pure rotation suffices
+        for either sign. The inbound velocity direction in the pericenter frame
+        is (-cos phi_inf, sin phi_inf); rotating it onto (0, 1) takes alpha =
+        phi_inf - pi / 2 (pseudocode 2.3, checked numerically in both signs).
         """
         alpha = self.asymptote_angle - np.pi / 2.0
         return np.array([[np.cos(alpha), -np.sin(alpha)],

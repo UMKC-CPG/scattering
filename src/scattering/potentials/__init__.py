@@ -1,11 +1,11 @@
 """Central potentials: the interface every potential satisfies and
 the potentials themselves.
 
-Governed by pseudocode section 2 and design section 2 (Coulomb), with
-the interface fixed by ARCHITECTURE section 6.1: a potential must
-supply its value and derivative, and MAY supply closed forms for the
-deflection function and the orbit. Consumers test for those
-capabilities and never branch on a potential's type (VISION P12).
+Governed by pseudocode section 2 and design section 2 (Coulomb), with the
+interface fixed by ARCHITECTURE section 6.1: a potential must supply its value
+and derivative, and MAY supply closed forms for the deflection function and the
+orbit. Consumers test for those capabilities and never branch on a potential's
+type (VISION P12).
 """
 
 from scattering.potentials.potential_interface import Potential

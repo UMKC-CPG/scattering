@@ -5,12 +5,11 @@ For a particle of energy E and impact parameter b,
 
 ##   g(r) = 1 - b^2 / r^2 - V(r) / E                            (5.2)
 
-is the squared radial speed over the asymptotic speed squared: it is
-positive outside the turning point and vanishes there. Its largest
-root is the distance of closest approach. Where g has a DOUBLE root
-(g = 0 and dg/dr = 0 together) the particle orbits the center
-indefinitely and the deflection diverges; that case is detected and
-reported, not silently given a number (design 5.2).
+is the squared radial speed over the asymptotic speed squared: it is positive
+outside the turning point and vanishes there. Its largest root is the distance
+of closest approach. Where g has a DOUBLE root (g = 0 and dg/dr = 0 together)
+the particle orbits the center indefinitely and the deflection diverges; that
+case is detected and reported, not silently given a number (design 5.2).
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -18,16 +17,15 @@ Attribution: this module is part of the scattering teaching tool.
 import numpy as np
 from scipy.optimize import brentq
 
-# Below this radius the inward march gives up: g has no sign change,
-# which for a repulsive potential cannot happen and for a later
-# potential means something is wrong with its implementation.
+# Below this radius the inward march gives up: g has no sign change, which for a
+# repulsive potential cannot happen and for a later potential means something is
+# wrong with its implementation.
 _SMALLEST_RADIUS = 1e-12
 
-# A double root of g is diagnosed by |g'(r_min)| below this, relative
-# to the energy scale. Near a double root the slope goes as the
-# square root of the distance to it, so a modest threshold is right;
-# the deflection quadrature independently reports a divergent
-# integral as the same condition.
+# A double root of g is diagnosed by |g'(r_min)| below this, relative to the
+# energy scale. Near a double root the slope goes as the square root of the
+# distance to it, so a modest threshold is right; the deflection quadrature
+# independently reports a divergent integral as the same condition.
 _ORBITING_TOLERANCE = 1e-6
 
 
@@ -46,21 +44,20 @@ def g_derivative(potential, energy, impact, radius):
 def turning_point_from_g(potential, energy, impact):
     """Return (r_min, orbiting) for one (E, b).
 
-    The head-on case with an admissible center is radial motion and
-    the turning point is the root of V(r) = E. Otherwise the largest
-    root of g is bracketed by marching inward from far out, halving
-    the radius until g changes sign, and then found by Brent's
-    method to machine precision. Marching inward finds the LARGEST
-    root first, which is the physical turning point when g has
+    The head-on case with an admissible center is radial motion and the turning
+    point is the root of V(r) = E. Otherwise the largest root of g is bracketed
+    by marching inward from far out, halving the radius until g changes sign,
+    and then found by Brent's method to machine precision. Marching inward finds
+    the LARGEST root first, which is the physical turning point when g has
     several (design 5.2).
     """
     if impact == 0.0:
         if not potential.admits_center():
             raise ValueError(f'b = 0 is not an orbit for '
                              f'{potential.describe()}')
-        radius = brentq(lambda r: potential.value(r) - energy,
-                        _SMALLEST_RADIUS, 1e3 * max(1.0, 1.0 / energy),
-                        xtol=1e-15, rtol=4 * np.finfo(float).eps)
+        radius = brentq(lambda r: potential.value(r) - energy, _SMALLEST_RADIUS,
+            1e3 * max(1.0, 1.0 / energy), xtol=1e-15,
+            rtol=4 * np.finfo(float).eps)
         return float(radius), False
 
     def g(radius):

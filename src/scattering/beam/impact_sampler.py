@@ -1,22 +1,21 @@
 """Laying out or sampling the impact parameters (pseudocode 3.2-3.5).
 
-Two layouts (design 3.3). `annuli` places particles at exactly the
-declared impact parameters, evenly in azimuth, so that a ring stays
-a ring as it scatters and lands on one cone -- the teaching picture.
-`disc` fills a disc with UNIFORM FLUX, the number per unit transverse
-area constant, which is the beam a cross section is defined against
-and what the detector needs to estimate one.
+Two layouts (design 3.3). `annuli` places particles at exactly the declared
+impact parameters, evenly in azimuth, so that a ring stays a ring as it scatters
+and lands on one cone -- the teaching picture. `disc` fills a disc with UNIFORM
+FLUX, the number per unit transverse area constant, which is the beam a cross
+section is defined against and what the detector needs to estimate one.
 
 Uniform flux means the probability density in b is proportional to
 b, so b is drawn by inverse transform, b = sqrt(b_min^2 + u (b_max^2
 - b_min^2)) with u uniform on [0, 1). Sampling b uniformly instead is
-the classic beginner's error (design 3.8): it gives a flux falling as
-1 / b and counts that estimate nothing.
+the classic beginner's error (design 3.8): it gives a flux falling as 1 / b and
+counts that estimate nothing.
 
-Only `rng.random()` is used, in a fixed order (all u, then all w),
-so that reproducibility rests on NumPy's PCG64 raw stream -- which
-NumPy holds stable across versions -- and not on its distribution
-methods, which it does not (design 3.5).
+Only `rng.random()` is used, in a fixed order (all u, then all w), so that
+reproducibility rests on NumPy's PCG64 raw stream -- which NumPy holds stable
+across versions -- and not on its distribution methods, which it does not
+(design 3.5).
 
 Attribution: this module is part of the scattering teaching tool.
 Derived code should cite it.
@@ -47,9 +46,9 @@ def sample_disc(n_particles, b_min, b_max, stratify, rng):
 
     With `stratify`, the interval of b^2 is divided into n_particles
     equal strata and one particle is placed uniformly within each:
-    the flux is still uniform on average but the count in any bin
-    has less variance. A stratified beam is not what an accelerator
-    produces, and the display labels it as such (design 3.3).
+    the flux is still uniform on average but the count in any bin has less
+    variance. A stratified beam is not what an accelerator produces, and the
+    display labels it as such (design 3.3).
     """
     uniform_area = rng.random(n_particles)
     uniform_angle = rng.random(n_particles)
@@ -73,9 +72,9 @@ def check_admissible(impact, potential):
 def generate_beam(spec, potential):
     """Build the frozen Beam record from a spec (pseudocode 3.2).
 
-    Validation of the spec (a seed present for `disc`, b_min < b_max,
-    non-empty annuli, ...) is the run-file loader's job; this
-    function assumes a valid spec and asserts the essentials.
+    Validation of the spec (a seed present for `disc`, b_min < b_max, non-empty
+    annuli, ...) is the run-file loader's job; this function assumes a valid
+    spec and asserts the essentials.
     """
     if spec.layout == 'annuli':
         assert len(spec.annuli) > 0, 'annuli layout with no rings'
@@ -89,13 +88,12 @@ def generate_beam(spec, potential):
                                       spec.b_max, spec.stratify, rng)
         ring_index = np.full(spec.n_particles, -1, dtype=int)
         widths = np.array([], dtype=float)
-        # Flux per unit transverse area, eq. (3.3): every cross-
-        # section estimate divides by it.
+        # Flux per unit transverse area, eq. (3.3): every cross- section
+        # estimate divides by it.
         flux = spec.n_particles / (np.pi * (spec.b_max ** 2
                                             - spec.b_min ** 2))
     else:
         raise ValueError(f'unknown beam layout {spec.layout!r}')
     check_admissible(impact, potential)
     return Beam(np.asarray(spec.energies, dtype=float), impact, azimuth,
-                ring_index, widths, float(flux), spec.layout, spec.seed,
-                spec.stratify)
+        ring_index, widths, float(flux), spec.layout, spec.seed, spec.stratify)

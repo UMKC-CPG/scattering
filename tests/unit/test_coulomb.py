@@ -7,8 +7,7 @@ import pytest
 
 from scattering.potentials import CoulombPotential
 from scattering.potentials.coulomb import (eccentricity, impact_of_angle,
-                                           rutherford_cross_section,
-                                           turning_point)
+    rutherford_cross_section, turning_point)
 
 CASES = [(1.0, 0.5), (1.0, 2.0), (3.0, 0.3), (0.5, 4.0), (2.0, 0.05)]
 
@@ -78,9 +77,9 @@ def test_anomaly_parametrization(sign, energy, impact):
 @pytest.mark.parametrize('sign', [+1, -1])
 def test_beam_frame_conventions(sign):
     """The exact start at large R sits at x = +b moving +y at the
-    asymptotic speed, and the exit velocity direction equals the
-    closed-form deflection, with the exit on the near side for
-    repulsion and the far side for attraction (design 4.8). This is
+    asymptotic speed, and the exit velocity direction equals the closed-form
+    deflection, with the exit on the near side for repulsion and the far side
+    for attraction (design 4.8). This is
     the test that would catch a wrong rotation in (2.13)."""
     energy, impact, radius = 1.0, 2.0, 1e4
     potential = CoulombPotential(sign)
