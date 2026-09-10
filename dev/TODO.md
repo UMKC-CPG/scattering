@@ -49,20 +49,13 @@ numbering so older cross-references still resolve.
 
 ## DESIGN
 
-- [ ] (D9) Conservation monitor and the error budget: numerical vs
-      statistical, kept separate (P3).
-- [ ] (D10) Run file: the TOML schema, precedence, presets,
-      fidelity table, `seed` required for `disc`.
-- [ ] (D11) Scene and geometry: annulus, cone, orbit plane,
-      probe-depth sphere, effective-potential plot, palettes.
-- [ ] (D12) Scrubber and interactive session: time and energy
-      sliders, play/pause/reverse, the loop.
-- [ ] (D12) "Guess the potential" mode: a student proposes
-      `V(r)`, the forward chain runs, pulls against the counts are
-      shown (D8.11). After the core session exists.
-- [ ] (D13) Batch tier and HDF5 layout mirroring D6.3.
 - [ ] (D1.5) Decide whether `interstellar_visitor` should name a
       real object's `v_∞` or keep the round 26 km/s.
+- [ ] (D12.10) "Guess the potential" mode: a student proposes
+      `V(r)`, the forward chain runs it as a custom potential, and
+      pulls against the counts are shown. After `v1.0-classroom`.
+- [ ] (D11) Set the Tier-1 default `n_particles` from the
+      rendering-budget spike (A9.3) once it has run.
 
 ---
 
@@ -110,3 +103,6 @@ numbering so older cross-references still resolve.
 - [x] (D7) Detector.
 - [x] (D8) Inversion, with the tail model, sign assumption,
       reach limit, and resampled error bands.
+- [x] (D9–D13) Error budget, run file, scene and palettes,
+      scrubber and session, batch and HDF5. Design complete for
+      the first version.

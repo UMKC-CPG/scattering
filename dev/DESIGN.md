@@ -37,15 +37,19 @@ Each entry: number, file, topic, status.
 8. [`design/08-inversion.md`](design/08-inversion.md) — counts →
    `dσ/dΩ` → `Θ(b)` → `V(r)`; the sign assumption, the tail model,
    reachability, error bands. *draft*
-9. `design/09-conservation-and-error-budget.md` — drift monitor;
-   numerical versus statistical error. *planned*
-10. `design/10-run-file.md` — the TOML schema and precedence.
-    *planned*
-11. `design/11-scene-and-geometry.md` — annulus, cone, orbit plane,
-    probe-depth sphere, palettes. *planned*
-12. `design/12-scrubber-and-session.md` — time and energy scrubbing,
-    the interactive loop. *planned*
-13. `design/13-batch-and-hdf5.md` — Tier 2 output layout. *planned*
+9. [`design/09-conservation-and-error-budget.md`](
+   design/09-conservation-and-error-budget.md) — the three kinds of
+   error, measured and never combined. *draft*
+10. [`design/10-run-file.md`](design/10-run-file.md) — the TOML
+    schema, units, validation, precedence, write-back. *draft*
+11. [`design/11-scene-and-geometry.md`](design/11-scene-and-geometry.md)
+    — drawables, the annulus and cone, probe-depth sphere, palettes
+    and the redundancy rule. *draft*
+12. [`design/12-scrubber-and-session.md`](
+    design/12-scrubber-and-session.md) — viewing vs run controls,
+    the loop, time and energy scrubbing. *draft*
+13. [`design/13-batch-and-hdf5.md`](design/13-batch-and-hdf5.md) —
+    the sink, HDF5 layout, XDMF, read-back, `scbatch.py`. *draft*
 
 Status is one of: planned, draft, reviewed, implemented, superseded.
 A superseded section keeps its number and file; its header names the

@@ -1,0 +1,252 @@
+# Design 12. The Scrubber and the Interactive Session
+
+> **Parent:** [`../DESIGN.md`](../DESIGN.md) — design index.
+> **Status:** draft.
+> **Serves:** G4 (scrub both directions), G5 (energy axis), G6, G7,
+> P5 (precompute, then view), P6 (interactivity), P14;
+> ARCHITECTURE A3 (execution model), A4.12 (`ui/`), A6.3, A8.6(3)
+> (determinism).
+> **Depends on:** Sections 6, 10, 11.
+> **Implemented by:** pseudocode section 12.
+
+---
+
+## 12.1 Purpose and scope
+
+The session is what a student drives. This section designs the
+loop that draws frames, the controls that move through a
+precomputed run, the controls that change the run and therefore
+rebuild it, and the single rule that separates the two. It does
+not design the drawables (Section 11) or the run file (Section 10).
+
+---
+
+## 12.2 Two kinds of control, one rule
+
+Every control is one of two kinds, and the kind decides what it is
+allowed to touch:
+
+**Viewing controls** read the results store and change what is
+shown. Time and energy scrubbing, camera, palette, panel layout,
+tracked-particle choice, `db̃` for the annulus display, the
+detector's display mode. They touch nothing in the physics zone of
+the run file and nothing in the store (which is frozen, Section
+6.7). Any sequence of them leaves every computed array bit-identical
+— A8.6(3), tested.
+
+**Run controls** edit the physics zone — energies, `b̃_max`,
+`n_particles`, the sign, the tail model, the integrator — and
+therefore produce a *new* resolved run specification, a new results
+store, and a new set of static drawables. They are never applied
+live to the existing store. The rule:
+
+> A run control makes a new run. A viewing control never does.
+
+The run specification is the source of truth (Section 10.8). When
+a run control is used the session resolves the new specification,
+shows the memory budget (Section 6.4), rebuilds the store with a
+progress readout, and swaps it in. The old store is discarded.
+`Save` writes the current resolved specification to a run file, so
+that what a student sees can always be handed to someone else.
+
+---
+
+## 12.3 The loop
+
+Single-threaded, and the session owns it, as the rigid-body tool's
+does — not a timer callback hung off VTK's interactor. Per tick:
+
+```
+  1. advance the frame index by the play state (12.4)
+  2. build the per-frame drawables for (energy_index, frame_index)
+     from the store (Section 11.7); static drawables are cached
+  3. hand the scene to the renderer; it draws once
+  4. pump the window's event queue; apply any control changes
+```
+
+**No physics runs in the loop.** Step 2 is array slicing (Section
+6.6, `frame`) and glyph placement. This is the payoff of P5: the
+rigid-body loop's hardest constraint — fixed substeps per frame so
+that the trajectory cannot depend on machine load — is not needed
+here, because nothing in the loop computes a trajectory. The frame
+rate can float freely, and the displayed ratio of scene time to
+wall time is reported rather than corrected.
+
+Why own the loop anyway: uniformity with the rigid-body tool, the
+video sink (Section 13) needs deterministic frame stepping without
+a window, and a future recoil panel or a second energy view should
+not require re-plumbing the interactor. The renderer boundary
+(A6.5) keeps the vedo specifics in one module.
+
+---
+
+## 12.4 Time controls
+
+All are changes to `frame_index` in `[0, n_samples − 1]`:
+
+| Control | Effect | Key |
+| --- | --- | --- |
+| Play / pause | advance by `+rate` per tick, or `0` | `space` |
+| Reverse | advance by `−rate` | `r` |
+| Step | `±1`, then pause | `.` / `,` |
+| Speed | `rate` in frames per tick, `1` to `16` | `+` / `−` |
+| Jump | to tracked particle's entry / pericenter / exit | `e` `p` `x` |
+| Home / end | `0` / `n_samples − 1` | `Home` / `End` |
+| Slider | any frame, drag | mouse |
+| Loop | wrap at the end, or stop | `l` |
+
+Reverse is exact: it reads the same stored frames backwards (G4).
+The telemetry shows `t̃` and the frame index, and the ratio of
+scene time advanced per wall second.
+
+**Rate is in frames, not in time.** Two energies have different
+time grids (Section 6.2); a rate in frames means a playback at
+`rate = 4` takes the same wall time for every energy, and the
+displayed `t̃` per frame differs — which is the point.
+
+---
+
+## 12.5 The energy slider (G5)
+
+`energy_index` in `[0, n_energies − 1]`, changed by a slider or by
+`[` / `]`. Because each particle exists at every energy (Section
+3.2), the slider changes nothing about *which* particles are shown,
+only their orbits. The frame index is preserved as a **fraction of
+the run**, `frame / n_samples` (Section 6.2), so that the picture
+stays at "the same moment" of the pass while the orbits tighten.
+
+The static drawables that depend on energy — traces, cones, the
+probe-depth sphere, the deflection and cross-section panels — are
+rebuilt at the new index from the cache. The rings and the entry
+plane do not depend on energy and are not rebuilt.
+
+The energies are shown sorted on the slider with their natural-unit
+and preset-unit values, and the index into the run file's order is
+shown beside them, since a teacher may have ordered the list
+deliberately (Section 3.2).
+
+---
+
+## 12.6 The tracked particle
+
+One particle is *tracked*: its orbit plane, `r` and `φ` markers,
+velocity arrow, turning point, asymptotes, and deflection arc are
+drawn (Section 11.2), its residual series fills the error-budget
+panel (Section 9.3), and its effective potential is plotted. It is
+chosen by clicking a glyph or a trace, by index in `[view]`, or by
+cycling with `Tab`. Choosing it is a viewing control.
+
+For an annulus layout the natural choice is one particle per ring;
+`Tab` cycles through rings first and azimuths second. For a disc
+layout `Tab` cycles in order of `b̃`.
+
+---
+
+## 12.7 The detector and inversion panels
+
+Both read the store's per-energy records (Sections 7.8, 8.9) and
+redraw when the energy index changes. Their viewing controls:
+
+- **Detector mode** (asymptotic / position) and **bin layout** are
+  *viewing* controls, because the counts are recomputed from the
+  stored `n̂_out` and free-flight lines without touching the
+  physics — the detector consumes the store and writes nothing
+  back. Switching them is instant.
+- **Exact vs measured** on the inversion panel substitutes the
+  exact cross section for the histogram (Section 8.2), a viewing
+  control that reruns the inversion (about a second with
+  resampling) and shows the noise vanish.
+- **Sign toggle** and **tail model** rerun the inversion the same
+  way; they are recorded in `[inversion]`, so a `Save` captures
+  them, but they change no trajectory and no count, so they are
+  viewing controls under the rule of 12.2.
+
+The last point deserves its statement: the inversion is *downstream*
+of the store, so every inversion setting is a viewing control. Only
+the beam, the potential, and the fidelity are run controls.
+
+---
+
+## 12.8 Run controls, and the budget
+
+Editing an energy, the beam layout, `b̃_max`, `n_particles`, the
+potential's sign or preset, the integrator, `R̃_max`, or
+`n_samples` opens the run-control path of 12.2. The session:
+
+1. shows the new resolved values and the memory budget beside the
+   old, and the estimated rebuild time from the last build's rate;
+2. on confirmation, rebuilds with a progress bar (the driver
+   reports per energy and per particle);
+3. swaps the store, rebuilds static drawables, keeps the frame
+   fraction and the tracked particle's index where they still
+   exist.
+
+`Esc` during a rebuild cancels it and keeps the old store. An edit
+that fails validation (Section 10.6) shows the message beside the
+field and leaves the run untouched.
+
+---
+
+## 12.9 Labeled scaling (P14)
+
+One control scales a physical quantity for visibility: the particle
+glyph size. Its factor is on the legend (Section 11.6). There is
+deliberately no "exaggerate the deflection" control: the deflection
+is the subject, and a student who wants to see a larger one lowers
+the energy or the impact parameter, which is physics.
+
+---
+
+## 12.10 Later: the guess-the-potential mode
+
+Recorded from Section 8.11 and the project's original discussion,
+not built in the first version: a student proposes a `V(r)` — a
+preset with edited parameters, or a hand-drawn curve on the
+recovered-potential panel — the forward chain runs it as a
+`custom` potential, and the predicted histogram's pulls against the
+actual counts are shown. It is a run control on a second store
+that lives beside the first, and it needs nothing the architecture
+does not already have: a tabulated potential satisfying A6.1 and a
+second results store. It is a Section 12 refinement because its
+whole content is interaction.
+
+---
+
+## 12.11 Invariants and tests
+
+- Any sequence of viewing controls leaves the store bit-identical
+  (A8.6(3)); the test drives a scripted sequence of every control
+  in 12.4–12.7 through the session with an offscreen renderer.
+- `frame_index` stays in range under every control, including at
+  the ends with loop off.
+- Changing `energy_index` preserves the frame fraction to within
+  one frame.
+- A run control never mutates the current store; it produces a new
+  object, and the old one is unchanged until dropped.
+- A cancelled rebuild leaves the session on the old store with the
+  old frame and tracked particle.
+- `Save` after any sequence of controls writes a run file that
+  reloads to the same resolved specification (Section 10.9).
+- The loop draws at least one frame per tick with no physics call
+  on the stack (an import-time check that `ui/` imports nothing
+  from `orbits/` or `deflection/` directly; it reaches them only
+  through `run/`).
+
+---
+
+## 12.12 Alternatives considered
+
+**Hang the loop on VTK's timer callback.** Simpler; rejected for
+the reasons in 12.3.
+
+**Apply beam edits live, re-integrating only the changed
+particles.** Rejected: it makes the store mutable and the
+determinism guarantee a matter of bookkeeping. The full rebuild is
+seconds for a Tier-1 run, and the budget is shown first.
+
+**Rate in scene time rather than frames.** Rejected; 12.4.
+
+**Keep `t̃` rather than the frame fraction across an energy
+change.** Rejected; 12.5 and Section 6.2.
+
+**An "exaggerate deflection" slider.** Rejected; 12.9.
