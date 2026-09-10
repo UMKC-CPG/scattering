@@ -17,18 +17,44 @@ name the section from this table that governs it.
 
 ## Sections
 
-| # | File | Governs | Design | Status |
-| --- | --- | --- | --- | --- |
-| 1 | [`01-topic-one.md`](pseudocode/01-topic-one.md) | `project` | 1 | draft |
+Each entry: number, file, what it governs under `src/scattering/`,
+the design section it implements, status.
 
-<!-- Add a row here in the SAME edit that creates the file.
+1. [`pseudocode/01-natural-units.md`](pseudocode/01-natural-units.md)
+   — governs `core/natural_units.py`, `core/units.py`,
+   `core/presets.py`. Design 1. *draft*
+2. [`pseudocode/02-coulomb.md`](pseudocode/02-coulomb.md) — governs
+   `potentials/potential_interface.py`, `potentials/coulomb.py`.
+   Design 2. *draft*
+3. [`pseudocode/03-beam.md`](pseudocode/03-beam.md) — governs
+   `beam/beam_spec.py`, `beam/impact_sampler.py`,
+   `beam/energy_sampler.py`. Design 3. *draft*
+4. [`pseudocode/04-orbits.md`](pseudocode/04-orbits.md) — governs
+   `orbits/orbit_provider.py`, `orbits/equations_of_motion.py`,
+   `orbits/integrators.py`, `orbits/analytic_orbits.py`,
+   `orbits/turning_point.py`, `orbits/embedding.py`. Design 4.
+   *draft*
+5. [`pseudocode/05-deflection.md`](pseudocode/05-deflection.md) —
+   governs `deflection/deflection_function.py`,
+   `deflection/cross_section.py`, `deflection/solid_angle.py`.
+   Design 5. *draft*
+6. [`pseudocode/06-results-store.md`](pseudocode/06-results-store.md)
+   — governs `run/results_store.py`, `run/driver.py`. Design 6.
+   *draft*
+7. `pseudocode/07-detector.md` — `detector/`. Design 7. *planned*
+8. `pseudocode/08-inversion.md` — `inversion/`. Design 8. *planned*
+9. `pseudocode/09-error-budget.md` — `analysis/`. Design 9.
+   *planned*
+10. `pseudocode/10-run-file.md` — `run/run_spec.py`,
+    `run/serialization.py`, `run/fidelity.py`. Design 10. *planned*
+11. `pseudocode/11-scene.md` — `geometry/`, `render/`. Design 11.
+    *planned*
+12. `pseudocode/12-session.md` — `ui/`, `scripts/scsim.py`.
+    Design 12. *planned*
+13. `pseudocode/13-batch.md` — `sinks/`, `scripts/scbatch.py`.
+    Design 13. *planned*
 
-     "Governs" names the source files this section specifies; it is
-     what makes the gate answerable in the other direction, letting a
-     reader holding a source file find the section above it. Keep it
-     current when code moves.
-
-     Status is one of: draft, reviewed, implemented, superseded. -->
+Status is one of: planned, draft, reviewed, implemented, superseded.
 
 ## Conventions
 

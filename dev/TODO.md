@@ -61,9 +61,10 @@ numbering so older cross-references still resolve.
 
 ## PSEUDOCODE
 
-- [ ] (P1–P6) Write pseudocode sections for design sections 1–6.
-      None exist yet; the chain gate in `CLAUDE.md` forbids any
-      `src/` edit until the governing section does.
+- [ ] (P7–P13) Pseudocode for design sections 7–13. P1–P6 exist;
+      the chain gate in `CLAUDE.md` forbids a `src/` edit until the
+      governing section does, so `v0.5-orbits` can be coded now and
+      the detector onward cannot.
 
 ---
 
@@ -106,3 +107,6 @@ numbering so older cross-references still resolve.
 - [x] (D9–D13) Error budget, run file, scene and palettes,
       scrubber and session, batch and HDF5. Design complete for
       the first version.
+- [x] (P1–P6) Pseudocode for units, Coulomb, beam, orbits,
+      deflection, results store and driver. The pericenter-to-beam
+      rotation (P2 eq. 2.13) was checked numerically in both signs.
