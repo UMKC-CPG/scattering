@@ -18,9 +18,10 @@ import numpy as np
 from scattering.core.natural_units import (angular_momentum,
                                            asymptotic_speed, kinetic_energy)
 from scattering.core.units import format_natural
+from scattering.analysis.conservation_monitor import residual_maxima
 from scattering.geometry import (Points, Polyline, annulus_ring, beam_axis,
-    cone_band, detector_sphere, entry_plane, orbit_plane, probe_depth,
-    tracked_markers, unmeasured_caps)
+    bin_bands, cone_band, detector_sphere, entry_plane, orbit_plane,
+    probe_depth, tracked_markers, unmeasured_caps)
 
 
 @dataclass(frozen=True)
@@ -95,9 +96,11 @@ def role_for_particle(store, particle_index):
     return f'annulus_{ring % 8}' if ring >= 0 else 'disc'
 
 
-def build_static(store, resolved, energy_index, tracked, glyph_radius):
+def build_static(store, resolved, energy_index, tracked, glyph_radius,
+                 detector=None):
     """The drawables that do not change between frames at one energy
-    and one tracked particle (pseudocode 11.4)."""
+    and one tracked particle (pseudocode 11.4), plus the detector's
+    bin bands when a DetectorResult is given (pseudocode 7.7)."""
     k = energy_index
     spec = resolved.spec
     r_max = resolved.settings.r_max
@@ -117,6 +120,10 @@ def build_static(store, resolved, energy_index, tracked, glyph_radius):
                                r_detect):
         out.append(Drawable('unmeasured', '7.3', cap, 'unmeasured',
                             'unmeasured', 'scene', True))
+    if detector is not None:
+        for band in bin_bands(detector.layout, r_detect):
+            out.append(Drawable('detector bin', '7.4', band, 'detector',
+                                None, 'scene', True))
     for j, (ring, ring_map) in enumerate(zip(spec.beam.annuli, maps)):
         role = f'annulus_{j % 8}'
         out.append(Drawable('annulus', '5.7', annulus_ring(ring, r_max),
@@ -178,7 +185,7 @@ def telemetry_for(store, resolved, k, n, i, scales):
     kinetic = float(kinetic_energy(speed))
     position = store.frame(k, n)[i]
     angmom = float(np.linalg.norm(np.cross(position, velocity)))
-    drift = store.drift(k)
+    energy_max, angmom_max, exterior_max = residual_maxima(store, k)
     return Telemetry(
         scene_time=float(store.time_of(k, n)), frame_index=n,
         n_samples=store.n_samples, energy_index=k,
@@ -193,7 +200,7 @@ def telemetry_for(store, resolved, k, n, i, scales):
         tracked_angular_momentum=angmom,
         tracked_deflection_deg=float(np.degrees(store.deflection[k, i])),
         tracked_turning_point=float(store.turning_point[k, i]),
-        exterior_deflection_max=float(drift[2].max()),
-        energy_drift_max=float(drift[0].max()),
-        angmom_drift_max=float(drift[1].max()),
+        exterior_deflection_max=exterior_max,
+        energy_drift_max=energy_max,
+        angmom_drift_max=angmom_max,
         provider=store.provider[k], mirror_diff=float(store.mirror_diff[k]))

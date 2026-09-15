@@ -294,7 +294,10 @@ detector is recomputed from stored directions in milliseconds.
   `expected` equals `N` to 0.1 % (the table integrates to the beam).
 - **Position mode.** For the annuli example: every particle's
   position angle exceeds its asymptotic angle by `asin(b / R_detect)`
-  to `1e-9`; `position_shift` halves when `R_detect` doubles.
+  to about 1 % (the drawn line starts at the exit point on the
+  `R_max` sphere, not on the true asymptote, so the offset carries
+  the exterior-deflection correction); `position_shift` halves when
+  `R_detect` doubles.
 - Batch store (`n_samples = 0`): position mode falls back to
   asymptotic and `position_shift` is NaN.
 - Annuli beam: `has_flux` is False, `estimate` and `pull` are NaN,

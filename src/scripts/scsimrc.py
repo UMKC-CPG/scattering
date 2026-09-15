@@ -39,7 +39,8 @@ def parameters_and_defaults():
         'default_camera': {'azimuth_deg': 35.0, 'elevation_deg': 20.0,
                            'distance': 4.0},
         'default_panels': ['deflection', 'cross_section',
-                           'effective_potential', 'telemetry'],
+                           'effective_potential', 'error_budget',
+                           'telemetry'],
         'window_size': [1280, 960],
 
         # Particle glyph radius in natural units, a labeled display convention;

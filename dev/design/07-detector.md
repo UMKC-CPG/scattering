@@ -98,8 +98,9 @@ student should see that happen.
 same `ΔΩ`, which sounds fair and is the worst choice here: for a
 `θ⁻⁴` law nearly every count lands in the first bin and the rest
 are empty. Offered *as a labeled bad example*, with a warning in
-the panel when more than a quarter of the bins are empty. The spike
-tried it first and this is what it found.
+the panel when more than a quarter of the bins are empty or one bin
+holds more than half of the counts. The spike tried it first and
+this is what it found.
 
 Every layout records its edges `θ_0 < θ_1 < … < θ_n` and the solid
 angle of each bin,

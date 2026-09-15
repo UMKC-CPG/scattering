@@ -60,10 +60,17 @@ def build_results_store(resolved, progress=None):
     theta_head = np.empty(n_energies)
     for k in range(n_energies):
         energy = beam.energies[k]
-        # --- Deflection stage (pseudocode 5), first.
-        table = build_deflection_table(potential, energy,
-            float(beam.impact_parameter.min()),
-            float(beam.impact_parameter.max()),
+        # --- Deflection stage (pseudocode 5), first. The table spans
+        #   the DECLARED beam extents, not the sampled ones: the
+        #   measured range of design 7.3 is what the beam could
+        #   produce, so that a bin the finite sample happened to miss
+        #   shows as empty rather than as unmeasured.
+        if beam_spec.layout == 'disc':
+            b_low, b_high = float(beam_spec.b_min), float(beam_spec.b_max)
+        else:
+            b_low = float(beam.impact_parameter.min())
+            b_high = float(beam.impact_parameter.max())
+        table = build_deflection_table(potential, energy, b_low, b_high,
             spec.fidelity.n_deflection_points, potential.admits_center())
         xsec = build_cross_section_table(table)
         mirror, mirror_diff = mirror_check(potential, energy, table,

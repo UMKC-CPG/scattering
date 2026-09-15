@@ -13,15 +13,15 @@ reverse.
 
 ## Status
 
-**`v0.6-scene` (2026-09-15): the interactive tool runs.**
-`scsim.py runs/rutherford.toml` loads and validates the run file,
-builds every orbit at every energy, and opens the vedo scene with a
-time scrubber, an energy slider, the impact-parameter annuli and
-their cones on the detector sphere, the probe-depth sphere, a
-tracked particle with its `r`, `φ`, velocity and asymptotes, and
-panels for the deflection function, cross section, and effective
-potential. The detector histogram and the inversion are next
-(pseudocode sections 7–9). See `dev/TODO.md`.
+**`v0.8-detector` (2026-09-15): the forward chain is complete on
+screen.** `scsim.py runs/rutherford_disc.toml` shows a uniform-flux
+beam scattering onto a detector whose histogram carries real Poisson
+errors, a pull readout against the exact cross section, hatched
+unmeasured cones, and an error-budget panel that keeps numerical,
+statistical, and assumption errors in separate columns. Attractive
+and repulsive potentials give bit-identical histograms while their
+orbits look nothing alike — VISION G8 on screen. The inversion
+(pseudocode section 8) is next. See `dev/TODO.md`.
 
 ## What It Will Do
 

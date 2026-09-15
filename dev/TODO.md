@@ -113,6 +113,12 @@ numbering so older cross-references still resolve.
 - [x] (P10–P12) Pseudocode for the run file (with the seam that
       moves unit resolution out of the driver), the scene and
       renderer, and the session and `scsim.py`.
+- [x] (v0.8-detector) P7 and P9 implemented: the detector as a
+      viewing control (key `d` mode, `b` layout) with bars, empty-bin
+      arrows and hatched unmeasured cones on the cross-section panel;
+      the error-budget panel with its three columns and the tracked
+      residual curves; bin bands on the sphere. The bitwise
+      sign-independence test passes.
 - [x] (P7, P9) Pseudocode for the detector (a pure function of
       the store, recomputed as a viewing control) and the error
       budget (three columns, never summed, enforced by an AST test).

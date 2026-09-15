@@ -15,6 +15,7 @@ from scattering.ui.session_state import (advance, cycle_tracked, jump,
                                          set_energy, set_rate, step)
 
 PALETTE_CYCLE = ('light', 'dark', 'colorblind')
+LAYOUT_CYCLE = ('log_theta', 'uniform_theta', 'equal_solid_angle')
 
 BINDINGS = {
     'space': ('play_pause', 'toggle playing'),
@@ -34,6 +35,7 @@ BINDINGS = {
     'Tab': ('track_next', 'next tracked particle'),
     'm': ('mirror', 'toggle the mirror deflection curve'),
     'd': ('detector_mode', 'asymptotic / position'),
+    'b': ('detector_layout', 'cycle log_theta / uniform / equal'),
     'c': ('palette', 'cycle light / dark / colorblind'),
     's': ('save', 'write the resolved run file'),
     'h': ('help', 'show this legend'),
@@ -90,6 +92,10 @@ def apply(command, session):
         state = replace(state, detector_mode='position'
                         if state.detector_mode == 'asymptotic'
                         else 'asymptotic')
+    elif command == 'detector_layout':
+        index = LAYOUT_CYCLE.index(state.detector_layout)
+        state = replace(state, detector_layout=LAYOUT_CYCLE[
+            (index + 1) % len(LAYOUT_CYCLE)])
     elif command == 'palette':
         index = PALETTE_CYCLE.index(state.palette)
         state = replace(state, palette=PALETTE_CYCLE[(index + 1)

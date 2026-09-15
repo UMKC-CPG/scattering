@@ -129,8 +129,8 @@ def test_bad_choice():
 
 
 def test_newer_schema_refused(tmp_path):
-    text = EXAMPLES[0].read_text().replace('[potential]',
-                                           'schema = 99\n[potential]', 1)
+    text = EXAMPLES[0].read_text().replace('schema = 1', 'schema = 99', 1)
+    assert 'schema = 99' in text
     path = tmp_path / 'future.toml'
     path.write_text(text)
     with pytest.raises(RunFileError):

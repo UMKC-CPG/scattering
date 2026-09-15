@@ -18,7 +18,8 @@ PRESENTATION = ('scattering.render', 'scattering.ui', 'scattering.sinks')
 
 # The detector may not see the potential or the orbits (ARCHITECTURE 6.4): it
 # consumes final directions and a bin layout only.
-DETECTOR_FORBIDDEN = ('scattering.potentials', 'scattering.orbits')
+DETECTOR_FORBIDDEN = ('scattering.potentials', 'scattering.orbits',
+                      'scattering.beam')
 
 
 def _imports_of(path):

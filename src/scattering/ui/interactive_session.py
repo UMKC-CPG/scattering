@@ -8,7 +8,11 @@ Attribution: this module is part of the scattering teaching tool.
 """
 
 import time
+from dataclasses import replace
 from pathlib import Path
+
+from scattering.analysis import build_error_budget
+from scattering.detector import build_detector_result
 
 from scattering.render.scene_description import (Scene, build_frame,
                                                   build_static)
@@ -28,6 +32,7 @@ class Session:
         self.controls = controls
         self.rc = rc
         self.static_cache = {}
+        self.detector_cache = {}
         self.running = True
         self.frames_drawn = 0
 
@@ -71,10 +76,20 @@ def run_session(resolved, store, controls, renderer, rc, state=None):
         scene_advanced += abs(store.time_of(k, state.frame_index)
                               - store.time_of(k, previous))
         session.state = state
-        static_key = (k, state.palette, state.tracked)
+        static_key = (k, state.palette, state.tracked,
+                      state.detector_layout, state.detector_mode)
+        detector_key = (k, state.detector_layout, state.detector_mode)
+        if detector_key not in session.detector_cache:
+            spec = replace(resolved.spec.detector, mode=state.detector_mode,
+                layout=state.detector_layout)
+            session.detector_cache[detector_key] = build_detector_result(
+                store, resolved, k, spec)
+        detector = session.detector_cache[detector_key]
         if static_key not in session.static_cache:
-            session.static_cache[static_key] = build_static(
-                store, resolved, k, state.tracked, rc.glyph_radius)
+            session.static_cache[static_key] = build_static(store, resolved, k,
+                state.tracked, rc.glyph_radius, detector)
+        budget = build_error_budget(store, resolved, k, state.tracked,
+                                    detector)
         dynamic, telemetry = build_frame(store, resolved, k, state.frame_index,
             state.tracked, rc.glyph_radius, resolved.scales)
         elapsed = max(1e-9, time.time() - wall_start)
@@ -84,7 +99,7 @@ def run_session(resolved, store, controls, renderer, rc, state=None):
         scene = Scene(session.static_cache[static_key], dynamic, telemetry)
         renderer.render(scene, state.camera, static_key, store=store,
             resolved=resolved, tracked=state.tracked,
-            show_mirror=state.show_mirror)
+            show_mirror=state.show_mirror, detector=detector, budget=budget)
         session.frames_drawn += 1
         controls.pump()
         for command in controls.read():

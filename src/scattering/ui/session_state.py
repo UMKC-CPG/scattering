@@ -31,6 +31,7 @@ class SessionState:
         'azimuth_deg': 35.0, 'elevation_deg': 20.0, 'distance': 4.0})
     panels: tuple = ()
     detector_mode: str = 'asymptotic'
+    detector_layout: str = 'log_theta'
     show_mirror: bool = False
 
 

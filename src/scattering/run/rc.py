@@ -33,7 +33,8 @@ class RcSettings:
     default_camera: dict = field(default_factory=lambda: {
         'azimuth_deg': 35.0, 'elevation_deg': 20.0, 'distance': 4.0})
     default_panels: tuple = ('deflection', 'cross_section',
-                             'effective_potential', 'telemetry')
+                             'effective_potential', 'error_budget',
+                             'telemetry')
     window_size: tuple = (1280, 960)
     glyph_radius: float = 0.02
     output_dir: str = '.'

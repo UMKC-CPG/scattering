@@ -85,7 +85,7 @@ class ViewSpec:
         'azimuth_deg': 35.0, 'elevation_deg': 20.0, 'distance': 4.0})
     tracked_particle: int = 0
     panels: tuple = ('deflection', 'cross_section', 'effective_potential',
-                     'telemetry')
+                     'error_budget', 'telemetry')
 
 
 @dataclass(frozen=True)

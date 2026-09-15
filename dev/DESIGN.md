@@ -33,13 +33,13 @@ Each entry: number, file, topic, status.
    *implemented*
 7. [`design/07-detector.md`](design/07-detector.md) — detector
    sphere, bin layouts, counts and pulls, the unmeasured cones.
-   *draft*
+   *implemented*
 8. [`design/08-inversion.md`](design/08-inversion.md) — counts →
    `dσ/dΩ` → `Θ(b)` → `V(r)`; the sign assumption, the tail model,
    reachability, error bands. *draft*
 9. [`design/09-conservation-and-error-budget.md`](
    design/09-conservation-and-error-budget.md) — the three kinds of
-   error, measured and never combined. *draft*
+   error, measured and never combined. *implemented*
 10. [`design/10-run-file.md`](design/10-run-file.md) — the TOML
     schema, units, validation, precedence, write-back. *implemented*
 11. [`design/11-scene-and-geometry.md`](design/11-scene-and-geometry.md)

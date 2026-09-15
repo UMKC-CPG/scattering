@@ -38,6 +38,19 @@ def unmeasured_caps(theta_min, theta_head, r_detect):
             SphereBand(_ORIGIN, float(r_detect), float(theta_head), np.pi))
 
 
+def bin_bands(layout, r_detect, half_width_deg=0.12):
+    """A thin band at every bin edge of a detector layout, so the
+    histogram's bins are visible on the sphere (pseudocode 7.7)."""
+    half_width = np.radians(half_width_deg)
+    bands = []
+    for edge in layout.edges:
+        low = max(0.0, edge - half_width)
+        high = min(np.pi, edge + half_width)
+        bands.append(SphereBand(_ORIGIN, float(r_detect), float(low),
+                                float(high)))
+    return bands
+
+
 def beam_axis(r_detect):
     return Segment(start=np.array([0.0, 0.0, -r_detect]),
                    end=np.array([0.0, 0.0, r_detect]))

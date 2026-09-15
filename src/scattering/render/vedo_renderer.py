@@ -71,7 +71,7 @@ class VedoRenderer:
         self.panel_key = None
 
     def render(self, scene, camera, static_key, store=None, resolved=None,
-               tracked=0, show_mirror=False):
+               tracked=0, show_mirror=False, detector=None, budget=None):
         """Draw one frame. Static actors are rebuilt only when
         `static_key` changes; panels likewise (pseudocode 11.6)."""
         scene_view = self.plotter.at(0)
@@ -103,7 +103,7 @@ class VedoRenderer:
             key = (static_key, tracked, show_mirror)
             if key != self.panel_key:
                 self._draw_panels(store, resolved, static_key[0], tracked,
-                                  show_mirror)
+                                  show_mirror, detector, budget)
                 self.panel_key = key
         if not self._shown:
             self.plotter.show(interactive=False, resetcam=False)
@@ -139,14 +139,15 @@ class VedoRenderer:
         cam.SetViewUp(0.0, 0.0, 1.0)
         view.renderer.ResetCameraClippingRange()
 
-    def _draw_panels(self, store, resolved, k, tracked, show_mirror):
+    def _draw_panels(self, store, resolved, k, tracked, show_mirror,
+                     detector=None, budget=None):
         for actor in self.panel_actors:
             self.plotter.remove(actor)
         self.panel_actors = []
         background = BACKGROUNDS[self.palette_name]
         for index, name in enumerate(self.panels, start=1):
             data = build_panel(name, store, resolved, k, tracked,
-                               show_mirror)
+                               show_mirror, detector, budget)
             if data is None:
                 continue
             image = render_panel(data, self.palette, background)

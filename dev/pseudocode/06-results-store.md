@@ -160,9 +160,13 @@ function build_results_store(spec: RunSpec, rc, progress = None)
         # --- deflection stage first: it is cheap, and it fixes the
         #     measured range and the out-directions the orbits' free
         #     flight will follow (D4.6).
-        table = build_deflection_table(potential, energy,
-                    b_min = min(beam.impact_parameter),
-                    b_max = max(beam.impact_parameter),
+        # The table spans the DECLARED extents for a disc (D7.3: the
+        # measured range is what the beam could produce) and the
+        # thrown values for annuli.
+        (b_lo, b_hi) = (beam_spec.b_min, beam_spec.b_max) if disc
+                       else (min(beam.impact_parameter),
+                             max(beam.impact_parameter))
+        table = build_deflection_table(potential, energy, b_lo, b_hi,
                     n_points = spec.fidelity.n_deflection_points,
                     admits_center = potential.admits_center())    # P5.4
         xsec  = build_cross_section_table(table)                   # P5.5
