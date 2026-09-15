@@ -26,7 +26,8 @@ not hold: the residual SERIES along the tracked orbit (design 9.3).
 | `store.energies[k]`, `store.impact_parameter[i]` | store | P3, P6 |
 | `resolved.potential.value(r)` — for the residual series | resolved run | P2 |
 | `resolved.settings` — integrator, rtol, atol, r_max | resolved run | P10.7 |
-| `DetectorResult` — `pull_rms`, `n_thrown`, `n_bins`, `has_flux` | P7.2 | P7.6 |
+| `DetectorResult` — `pull_rms`, `n_thrown`, `n_bins`, `has_flux` |
+| | P7.2 | P7.6 |
 | `InversionResult` — bands, tail fraction, sign, `quad_error` |
 | (None until P8 exists) | P8 | P8 |
 
