@@ -41,10 +41,13 @@ the design section it implements, status.
 6. [`pseudocode/06-results-store.md`](pseudocode/06-results-store.md)
    — governs `run/results_store.py`, `run/driver.py`. Design 6.
    *implemented*
-7. `pseudocode/07-detector.md` — `detector/`. Design 7. *planned*
+7. [`pseudocode/07-detector.md`](pseudocode/07-detector.md) — governs
+   `detector/` and the panel, geometry and session grafts it names.
+   Design 7. *draft*
 8. `pseudocode/08-inversion.md` — `inversion/`. Design 8. *planned*
-9. `pseudocode/09-error-budget.md` — `analysis/`. Design 9.
-   *planned*
+9. [`pseudocode/09-error-budget.md`](pseudocode/09-error-budget.md)
+   — governs `analysis/` and the error-budget panel. Design 9.
+   *draft*
 10. [`pseudocode/10-run-file.md`](pseudocode/10-run-file.md) —
     governs `run/run_spec.py`, `run/serialization.py`,
     `run/schema.py`, `run/rc.py`, `scripts/scsimrc.py`, and the

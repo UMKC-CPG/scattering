@@ -59,9 +59,9 @@ numbering so older cross-references still resolve.
 
 ## PSEUDOCODE
 
-- [ ] (P7, P8, P9, P13) Pseudocode for the detector, inversion,
-      error budget, and batch tier. P1–P6 and P10–P12 exist, so
-      `v0.6-scene` can be coded now and the detector onward cannot.
+- [ ] (P8, P13) Pseudocode for the inversion and the batch tier.
+      P1–P7 and P9–P12 exist, so `v0.8-detector` can be coded now
+      and the inversion cannot.
 
 ---
 
@@ -113,6 +113,9 @@ numbering so older cross-references still resolve.
 - [x] (P10–P12) Pseudocode for the run file (with the seam that
       moves unit resolution out of the driver), the scene and
       renderer, and the session and `scsim.py`.
+- [x] (P7, P9) Pseudocode for the detector (a pure function of
+      the store, recomputed as a viewing control) and the error
+      budget (three columns, never summed, enforced by an AST test).
 - [x] (v0.6-scene) P10–P12 implemented: run files load, validate,
       resolve and write back; `scsim.py runs/rutherford.toml` opens
       the scene with the scrubber, the energy slider, the annulus
