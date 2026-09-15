@@ -61,10 +61,9 @@ numbering so older cross-references still resolve.
 
 ## PSEUDOCODE
 
-- [ ] (P7–P13) Pseudocode for design sections 7–13. P1–P6 exist;
-      the chain gate in `CLAUDE.md` forbids a `src/` edit until the
-      governing section does, so `v0.5-orbits` can be coded now and
-      the detector onward cannot.
+- [ ] (P7, P8, P9, P13) Pseudocode for the detector, inversion,
+      error budget, and batch tier. P1–P6 and P10–P12 exist, so
+      `v0.6-scene` can be coded now and the detector onward cannot.
 
 ---
 
@@ -109,6 +108,9 @@ numbering so older cross-references still resolve.
 - [x] (P1–P6) Pseudocode for units, Coulomb, beam, orbits,
       deflection, results store and driver. The pericenter-to-beam
       rotation (P2 eq. 2.13) was checked numerically in both signs.
+- [x] (P10–P12) Pseudocode for the run file (with the seam that
+      moves unit resolution out of the driver), the scene and
+      renderer, and the session and `scsim.py`.
 - [x] (v0.5-orbits) `core/`, `potentials/`, `beam/`, `orbits/`,
       `deflection/`, `run/` implemented with 136 tests. Building the
       store corrected three design claims upward: the entry plane is

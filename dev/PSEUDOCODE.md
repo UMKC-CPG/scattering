@@ -45,12 +45,14 @@ the design section it implements, status.
 8. `pseudocode/08-inversion.md` — `inversion/`. Design 8. *planned*
 9. `pseudocode/09-error-budget.md` — `analysis/`. Design 9.
    *planned*
-10. `pseudocode/10-run-file.md` — `run/run_spec.py`,
-    `run/serialization.py`, `run/fidelity.py`. Design 10. *planned*
-11. `pseudocode/11-scene.md` — `geometry/`, `render/`. Design 11.
-    *planned*
-12. `pseudocode/12-session.md` — `ui/`, `scripts/scsim.py`.
-    Design 12. *planned*
+10. [`pseudocode/10-run-file.md`](pseudocode/10-run-file.md) —
+    governs `run/run_spec.py`, `run/serialization.py`,
+    `run/schema.py`, `run/rc.py`, `scripts/scsimrc.py`, and the
+    resolution the driver hands over. Design 10. *draft*
+11. [`pseudocode/11-scene.md`](pseudocode/11-scene.md) — governs
+    `geometry/` and `render/`. Design 11. *draft*
+12. [`pseudocode/12-session.md`](pseudocode/12-session.md) —
+    governs `ui/` and `scripts/scsim.py`. Design 12. *draft*
 13. `pseudocode/13-batch.md` — `sinks/`, `scripts/scbatch.py`.
     Design 13. *planned*
 
