@@ -1,6 +1,8 @@
 # rutherford_disc.toml -- a uniform-flux beam for the detector and
 # the inversion. Same physics as rutherford.toml; different beam.
 
+schema = 1                      # run-file schema version (design 10.4)
+
 [potential]
 kind   = "coulomb"
 preset = "alpha_on_gold"

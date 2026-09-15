@@ -7,6 +7,8 @@
 # design section 1) or dimensioned strings ("5 MeV", "26 km/s"),
 # which the units boundary converts on load.
 
+schema = 1                      # run-file schema version (design 10.4)
+
 [potential]
 kind   = "coulomb"
 preset = "alpha_on_gold"        # kappa = Z1 Z2 e^2 / 4 pi eps0, m = m_alpha
