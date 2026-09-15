@@ -41,13 +41,13 @@ Each entry: number, file, topic, status.
    design/09-conservation-and-error-budget.md) — the three kinds of
    error, measured and never combined. *draft*
 10. [`design/10-run-file.md`](design/10-run-file.md) — the TOML
-    schema, units, validation, precedence, write-back. *draft*
+    schema, units, validation, precedence, write-back. *implemented*
 11. [`design/11-scene-and-geometry.md`](design/11-scene-and-geometry.md)
     — drawables, the annulus and cone, probe-depth sphere, palettes
-    and the redundancy rule. *draft*
+    and the redundancy rule. *implemented*
 12. [`design/12-scrubber-and-session.md`](
     design/12-scrubber-and-session.md) — viewing vs run controls,
-    the loop, time and energy scrubbing. *draft*
+    the loop, time and energy scrubbing. *implemented*
 13. [`design/13-batch-and-hdf5.md`](design/13-batch-and-hdf5.md) —
     the sink, HDF5 layout, XDMF, read-back, `scbatch.py`. *draft*
 

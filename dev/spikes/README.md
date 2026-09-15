@@ -126,3 +126,35 @@ must present the sign as a student's choice and show both fits.
 ```bash
 python3 dev/spikes/firsov_inversion.py
 ```
+
+---
+
+## `render_budget.py`
+
+**Question it answered:** how many particles, each with an adaptive
+trace and a moving glyph, does the real render path (scene
+description → `VedoRenderer`, panels on) sustain offscreen, and does
+the frame rate depend on the particle count?
+
+**Answer, first run (2026-09-15, on `c151.mgmt`, a 1-CPU management
+node at load ~13, 960×720, EGL offscreen):** about **3 fps
+independent of N** from 50 to 500 particles (3,800 to 38,000 trace
+points), all frames pixel-verified. The flat curve means the cost
+is fixed per-frame overhead — rebuilding the per-frame actors and
+the shared node's contention — not geometry, so the geometry budget
+is not yet the limit and the default `n_particles` cannot be set
+from this run. **Re-run on an interactive compute node** (`srun
+--partition=interactive --cpus-per-task=8`, `unset DISPLAY`) before
+fixing the Tier-1 default; the number here is a floor, not a
+measurement of the scene.
+
+**What it established regardless:** offscreen rendering on the
+cluster needs `VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow` (the
+X-based default hangs with no display, and OSMesa is not installed);
+the renderer sets it when `DISPLAY` is unset. `xvfb-run` exists as
+a fallback.
+
+```bash
+unset DISPLAY
+python3 dev/spikes/render_budget.py --counts 50 200 500 1000
+```

@@ -1,16 +1,22 @@
-"""The reproducible unit of work: the run specification, the driver
-that runs the forward chain from it, and the results store the driver fills.
+"""The reproducible unit of work: the run specification, its
+resolution, the run file on disk, the driver that runs the forward chain, and
+the results store the driver fills.
 
-Governed by pseudocode section 6 (store and driver) and, once written, section
-10 (the run file). In v0.5 a RunSpec is built directly in code; the TOML path
-arrives with pseudocode 10.
+Governed by pseudocode sections 6 (store and driver) and 10 (the run file and
+its resolution).
 """
 
-from scattering.run.run_spec import (FidelitySpec, PotentialSpec,
-                                     RcSettings, RunSpec)
+from scattering.run.rc import RcSettings, load_rc
+from scattering.run.run_spec import (DetectorSpec, FidelitySpec, InversionSpec,
+    MetaSpec, PotentialSpec, ResolvedRun, RunFileError, RunSpec, ViewSpec,
+    resolve)
 from scattering.run.results_store import ResultsStore, estimate_bytes
-from scattering.run.driver import build_results_store, check_budget
+from scattering.run.driver import build_results_store
+from scattering.run.serialization import (load_and_resolve, load_run_file,
+                                          validate, write_back)
 
-__all__ = ['FidelitySpec', 'PotentialSpec', 'RcSettings', 'RunSpec',
+__all__ = ['RcSettings', 'load_rc', 'DetectorSpec', 'FidelitySpec',
+           'InversionSpec', 'MetaSpec', 'PotentialSpec', 'ResolvedRun',
+           'RunFileError', 'RunSpec', 'ViewSpec', 'resolve',
            'ResultsStore', 'estimate_bytes', 'build_results_store',
-           'check_budget']
+           'load_and_resolve', 'load_run_file', 'validate', 'write_back']

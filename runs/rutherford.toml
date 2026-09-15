@@ -52,4 +52,4 @@ n_deflection_points = 400       # the theta(b) table (design 5.4)
 
 [view]
 palette = "light"               # "dark", "colorblind"
-camera  = { azimuth_deg = 35, elevation_deg = 20, distance = 3.0 }
+camera  = { azimuth_deg = 35, elevation_deg = 20, distance = 4.0 }

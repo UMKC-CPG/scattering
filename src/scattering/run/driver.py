@@ -17,88 +17,36 @@ Attribution: this module is part of the scattering teaching tool.
 """
 
 import datetime
-import subprocess
 import sys
-from pathlib import Path
 
 import numpy as np
 
-from scattering.beam import BeamSpec, generate_beam, particle_energy
-from scattering.beam.beam_spec import AnnulusSpec
+from scattering.beam import generate_beam, particle_energy
 from scattering.core.natural_units import asymptotic_speed
-from scattering.core.units import (build_scales, to_natural,
-                                   to_natural_list)
 from scattering.deflection import (annulus_map, build_cross_section_table,
     build_deflection_table, mirror_check, particle_outputs)
-from scattering.orbits import OrbitSettings, choose_provider, embed
-from scattering.potentials import make_potential
-from scattering.run.results_store import ResultsStore, estimate_bytes
-from scattering.run.run_spec import RcSettings
+from scattering.orbits import choose_provider, embed
+from scattering.run.results_store import ResultsStore
+from scattering.run.run_spec import git_commit
 
 
-def check_budget(spec, rc):
-    """Estimate the store's size from the specification alone and
-    refuse to proceed past the rc cap, naming the setting to change
-    (design 6.4). Returns the estimate in bytes."""
-    n_energies = len(spec.beam.energies)
-    if spec.beam.layout == 'annuli':
-        n_particles = sum(ring.n_azimuth for ring in spec.beam.annuli)
-    else:
-        n_particles = spec.beam.n_particles
-    estimate = estimate_bytes(n_energies, n_particles, spec.fidelity.n_samples,
-        spec.fidelity.trace_points_max, spec.fidelity.n_deflection_points)
-    if estimate > rc.max_store_bytes:
-        raise MemoryError(
-            f'estimated results store of {estimate / 1e9:.2f} GB exceeds '
-            f'max_store_bytes = {rc.max_store_bytes / 1e9:.2f} GB; lower '
-            f'n_samples, n_particles, or the number of energies, or '
-            f'raise the cap in the rc file')
-    return estimate
+def build_results_store(resolved, progress=None):
+    """Run the forward chain from a ResolvedRun (pseudocode 10.1) and
+    return a frozen ResultsStore.
 
-
-def resolve_beam_units(beam_spec, scales):
-    """Convert every dimensioned quantity of a BeamSpec to natural
-    units, once (pseudocode 6.3-6.4). Bare numbers pass through."""
-    energies = to_natural_list(list(beam_spec.energies), 'energy', scales)
-    annuli = tuple(AnnulusSpec(to_natural(ring.impact, 'length', scales),
-                               to_natural(ring.width, 'length', scales),
-                               int(ring.n_azimuth))
-                   for ring in beam_spec.annuli)
-    return BeamSpec(energies, beam_spec.layout, annuli, beam_spec.n_particles,
-        to_natural(beam_spec.b_min, 'length', scales),
-        to_natural(beam_spec.b_max, 'length', scales), beam_spec.stratify,
-        beam_spec.seed, beam_spec.distribution)
-
-
-def build_results_store(spec, rc=None, progress=None):
-    """Run the forward chain and return a frozen ResultsStore.
-
-    `progress(energy_index, particle_index)` is called after each orbit, for a
-    progress bar. The order of stages is the whole content of this function; see
-    the module docstring.
+    Resolution -- the potential, the reference scales, the unit conversion, the
+    orbit settings, and the memory budget -- happened in `run_spec.resolve`
+    (pseudocode 10.7); this function starts at the beam. `progress(energy_index,
+    particle_index)` is called after each orbit, for a progress bar. The order
+    of stages is the whole content of this function; see the module docstring.
     """
-    rc = rc or RcSettings()
-    potential = make_potential(spec.potential)
-    scales = build_scales(spec.potential, potential,
-                          spec.beam.energies[0])
-    beam_spec = resolve_beam_units(spec.beam, scales)
-    check_budget(spec, rc)
+    spec = resolved.spec
+    potential = resolved.potential
+    beam_spec = spec.beam
+    settings = resolved.settings
     beam = generate_beam(beam_spec, potential)
-
-    r_max = to_natural(spec.fidelity.r_max, 'length', scales)
-    largest_impact = beam_spec.largest_impact()
-    if r_max <= largest_impact:
-        raise ValueError(f'r_max = {r_max} must exceed the beam\'s largest '
-                         f'impact parameter {largest_impact}')
-    settings = OrbitSettings(r_max=r_max, integrator=spec.fidelity.integrator,
-        rtol=spec.fidelity.rtol, atol=spec.fidelity.atol,
-        step=spec.fidelity.step,
-        asymptote_tolerance=spec.fidelity.asymptote_tolerance,
-        trace_angle=np.radians(spec.fidelity.trace_angle_deg),
-        trace_points_max=spec.fidelity.trace_points_max,
-        orbit_provider=spec.fidelity.orbit_provider, entry_plane_z=r_max)
     provider = choose_provider(potential, settings)
-    r_detect = spec.detector_radius * r_max
+    r_detect = resolved.detector_radius
 
     n_energies, n_particles = beam.n_energies, beam.n_particles
     n_samples = spec.fidelity.n_samples
@@ -172,7 +120,7 @@ def build_results_store(spec, rc=None, progress=None):
     store.beam = beam.with_angles(theta_min, theta_head)
     store.created = datetime.datetime.now().isoformat(timespec='seconds')
     store.versions = _versions()
-    store.git_commit = _git_commit()
+    store.git_commit = git_commit()
     store.freeze()
     return store
 
@@ -265,17 +213,3 @@ def _versions():
     import scipy
     return {'python': sys.version.split()[0], 'numpy': numpy.__version__,
             'scipy': scipy.__version__}
-
-
-def _git_commit():
-    """The source tree's commit and whether it was dirty, or None if
-    git is unavailable; provenance, not a dependency."""
-    root = Path(__file__).resolve().parents[3]
-    try:
-        commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root,
-            capture_output=True, text=True, check=True).stdout.strip()
-        dirty = subprocess.run(['git', 'status', '--porcelain'], cwd=root,
-            capture_output=True, text=True, check=True).stdout.strip() != ''
-        return commit + ('-dirty' if dirty else '')
-    except (OSError, subprocess.CalledProcessError):
-        return None

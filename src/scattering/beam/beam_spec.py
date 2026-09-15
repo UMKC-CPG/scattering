@@ -58,6 +58,12 @@ class BeamSpec:
             return min(ring.impact for ring in self.annuli)
         return self.b_min
 
+    def n_particles_total(self):
+        """How many particles the beam throws (pseudocode 10.7)."""
+        if self.layout == 'annuli':
+            return sum(ring.n_azimuth for ring in self.annuli)
+        return self.n_particles
+
 
 def _read_only(array):
     array = np.array(array)

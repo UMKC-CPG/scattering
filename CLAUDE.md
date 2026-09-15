@@ -353,7 +353,7 @@ separate environment and no modulefile (`dev/ARCHITECTURE.md` §9.1).
 
 ```bash
 source $CPG_VENV_RIGID            # the shared course environment
-python3 src/scripts/scsim.py runs/rutherford.toml   # Tier 1 (after P12)
+python3 src/scripts/scsim.py runs/rutherford.toml   # Tier 1
 python3 dev/spikes/coulomb_closed_forms.py          # re-run a spike
 ```
 
@@ -363,3 +363,9 @@ python3 dev/spikes/coulomb_closed_forms.py          # re-run a spike
 source $CPG_VENV_RIGID
 pytest tests/ -v
 ```
+
+The render tests need an offscreen OpenGL context. With `DISPLAY`
+unset the renderer asks VTK for its EGL window class, which works on
+the cluster's nodes; where no context exists the tests skip. VTK's
+import is slow on the shared filesystem, so expect the first render
+test to take a minute.

@@ -40,10 +40,10 @@ numbering so older cross-references still resolve.
 
 ## ARCHITECTURE
 
-- [ ] (A9.3) Rendering-budget spike: frame rate vs particle count
-      and trace length for a many-thin-traces scene, on an
-      interactive node with software rendering. Sets the Tier-1
-      default `n_particles`. Blocked by: nothing; do before D11.
+- [ ] (A9.3) Re-run `dev/spikes/render_budget.py` on an interactive
+      compute node (`srun --partition=interactive`); the first run
+      was on a loaded 1-CPU management node and is indicative only.
+      Then set the Tier-1 default `n_particles` from it.
 
 ---
 
@@ -54,8 +54,6 @@ numbering so older cross-references still resolve.
 - [ ] (D12.10) "Guess the potential" mode: a student proposes
       `V(r)`, the forward chain runs it as a custom potential, and
       pulls against the counts are shown. After `v1.0-classroom`.
-- [ ] (D11) Set the Tier-1 default `n_particles` from the
-      rendering-budget spike (A9.3) once it has run.
 
 ---
 
@@ -69,8 +67,12 @@ numbering so older cross-references still resolve.
 
 ## CODE
 
-- [ ] (src/scripts/) Rename the template `XYZ.py` / `XYZrc.py` to
-      `scsim.py` / `scsimrc.py` once P12 exists.
+- [ ] (src/scripts/) Delete the template `XYZ.py` / `XYZrc.py` now
+      that `scsim.py` / `scsimrc.py` exist, or keep as the pattern
+      for `scbatch.py` (P13) and delete then.
+- [ ] (D11/D12) Camera framing: the default camera clips the
+      detector sphere at distance 3; raised to 4. A "fit to scene"
+      key and per-energy framing are refinements.
 - [ ] (src/scattering/) Remaining groups per A4 — `detector/`,
       `inversion/`, `analysis/`, `geometry/`, `render/`, `ui/`,
       `sinks/` — each after its pseudocode section.
@@ -111,6 +113,12 @@ numbering so older cross-references still resolve.
 - [x] (P10–P12) Pseudocode for the run file (with the seam that
       moves unit resolution out of the driver), the scene and
       renderer, and the session and `scsim.py`.
+- [x] (v0.6-scene) P10–P12 implemented: run files load, validate,
+      resolve and write back; `scsim.py runs/rutherford.toml` opens
+      the scene with the scrubber, the energy slider, the annulus
+      and cone, the probe-depth sphere, and three 2D panels. The
+      renderer selects VTK's EGL window when DISPLAY is unset, which
+      is what makes offscreen tests possible on the cluster.
 - [x] (v0.5-orbits) `core/`, `potentials/`, `beam/`, `orbits/`,
       `deflection/`, `run/` implemented with 136 tests. Building the
       store corrected three design claims upward: the entry plane is

@@ -13,14 +13,15 @@ reverse.
 
 ## Status
 
-**`v0.5-orbits` (2026-09-10): the forward chain from a run
-specification to a frozen results store runs and is tested** —
-natural units and presets, the Coulomb closed forms, the beam, both
-orbit providers, the deflection function and cross section, and the
-store with its driver, 136 tests. No display yet, and no run-file
-loader: a run is built in code from the records of
-`src/scattering/run/run_spec.py` until pseudocode section 10 lands.
-See `dev/TODO.md` for what is next.
+**`v0.6-scene` (2026-09-15): the interactive tool runs.**
+`scsim.py runs/rutherford.toml` loads and validates the run file,
+builds every orbit at every energy, and opens the vedo scene with a
+time scrubber, an energy slider, the impact-parameter annuli and
+their cones on the detector sphere, the probe-depth sphere, a
+tracked particle with its `r`, `φ`, velocity and asymptotes, and
+panels for the deflection function, cross section, and effective
+potential. The detector histogram and the inversion are next
+(pseudocode sections 7–9). See `dev/TODO.md`.
 
 ## What It Will Do
 

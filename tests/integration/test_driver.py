@@ -8,8 +8,9 @@ import numpy as np
 import pytest
 
 from scattering.beam.beam_spec import AnnulusSpec, BeamSpec
-from scattering.run import (FidelitySpec, PotentialSpec, RcSettings,
-                            RunSpec, build_results_store, check_budget)
+from scattering.run import (DetectorSpec, FidelitySpec, PotentialSpec,
+                            RcSettings, RunSpec, build_results_store,
+                            resolve)
 
 
 def rutherford_spec(n_samples=200, **fidelity):
@@ -22,19 +23,25 @@ def rutherford_spec(n_samples=200, **fidelity):
                               AnnulusSpec(1.0, 0.05, 8),
                               AnnulusSpec(4.0, 0.05, 8))),
         fidelity=FidelitySpec(r_max=40.0, n_samples=n_samples,
-                              n_deflection_points=100, **fidelity))
+                              n_deflection_points=100, **fidelity),
+        detector=DetectorSpec(radius=2.0))
+
+
+def build(spec):
+    """Resolve then build (pseudocode 10.2)."""
+    return build_results_store(resolve(spec))
 
 
 @pytest.fixture(scope='module')
 def store():
-    return build_results_store(rutherford_spec())
+    return build(rutherford_spec())
 
 
 def test_builds_quickly(store):
     """A wall-clock guard, marked as such: the example must build in
     well under ten seconds on a login node."""
     start = time.time()
-    build_results_store(rutherford_spec())
+    build(rutherford_spec())
     assert time.time() - start < 10.0
 
 
@@ -102,8 +109,8 @@ def test_measured_range_written_to_beam(store):
 def test_determinism():
     """ARCHITECTURE 8.6(3): two builds are bit-identical, and a read
     sequence leaves every array unchanged."""
-    first = build_results_store(rutherford_spec(n_samples=50))
-    second = build_results_store(rutherford_spec(n_samples=50))
+    first = build(rutherford_spec(n_samples=50))
+    second = build(rutherford_spec(n_samples=50))
     for name in ('position', 'velocity', 'polar', 'phase', 'deflection',
                  'turning_point', 'time_offset', 'out_direction'):
         assert np.array_equal(getattr(first, name), getattr(second, name))
@@ -120,12 +127,12 @@ def test_determinism():
 def test_budget_refusal_names_the_setting():
     spec = rutherford_spec(n_samples=100_000)
     with pytest.raises(MemoryError) as caught:
-        check_budget(spec, RcSettings(max_store_bytes=1_000_000))
+        resolve(spec, RcSettings(max_store_bytes=1_000_000))
     assert 'max_store_bytes' in str(caught.value)
 
 
 def test_batch_mode_store():
-    store = build_results_store(rutherford_spec(n_samples=0))
+    store = build(rutherford_spec(n_samples=0))
     assert store.position is None
     assert store.out_direction.shape == (3, 25, 3)
     assert np.isfinite(store.deflection).all()

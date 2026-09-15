@@ -4,27 +4,25 @@
 
 TEMPLATE: rename alongside its script, to <name>rc.py.
 
-This file holds the hard defaults for every setting XYZ.py
-understands. It is looked up first in the working directory and then
-in $PROJECT_RC, so a user can copy it next to their data and edit it
-without touching the installed version.
+This file holds the hard defaults for every setting XYZ.py understands. It is
+looked up first in the working directory and then in $PROJECT_RC, so a user can
+copy it next to their data and edit it without touching the installed version.
 
-It is a plain Python module rather than a data file on purpose: a
-default can be computed, and the comments explaining each setting sit
-right beside the value they explain.
+It is a plain Python module rather than a data file on purpose: a default can be
+computed, and the comments explaining each setting sit right beside the value
+they explain.
 
-This file has no `main()` and is never run as an entry point, so it
-does not log to `command` the way XYZ.py does.
+This file has no `main()` and is never run as an entry point, so it does not log
+to `command` the way XYZ.py does.
 """
 
 
 def parameters_and_defaults():
     """Return the dictionary of default parameter values.
 
-    Every key here must be consumed by ScriptSettings in the paired
-    script. A key added here and not read there is dead; a key read
-    there and missing here is a KeyError at startup, which is the
-    intended, loud failure.
+    Every key here must be consumed by ScriptSettings in the paired script. A
+    key added here and not read there is dead; a key read there and missing here
+    is a KeyError at startup, which is the intended, loud failure.
     """
 
     param_dict = {
@@ -48,6 +46,6 @@ def parameters_and_defaults():
 
 
 if __name__ == '__main__':
-    # Running this file directly prints the defaults, which is a
-    # convenient way to check what the script will start from.
+    # Running this file directly prints the defaults, which is a convenient way
+    # to check what the script will start from.
     print(parameters_and_defaults())
