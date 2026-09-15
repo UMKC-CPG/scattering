@@ -141,7 +141,7 @@ function tracked_markers(store, k, i, n, r_max) -> list of Geometry:
       Segment(entry asymptote), Segment(exit asymptote)
                                                   role "asymptote"
       Arc(between the two asymptote directions)
-                                                  role "deflection" label "Theta"
+                                            role "deflection" label "Theta"
     ]
 ```
 
