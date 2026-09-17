@@ -67,9 +67,9 @@ numbering so older cross-references still resolve.
 
 ## CODE
 
-- [ ] (src/scripts/) Delete the template `XYZ.py` / `XYZrc.py` now
-      that `scsim.py` / `scsimrc.py` exist, or keep as the pattern
-      for `scbatch.py` (P13) and delete then.
+- [x] (src/scripts/) Deleted the template `XYZ.py` / `XYZrc.py`;
+      `scsim.py` / `scsimrc.py` are the pattern for `scbatch.py`
+      (P13), and the template itself keeps the originals.
 - [ ] (D11/D12) Camera framing: the default camera clips the
       detector sphere at distance 3; raised to 4. A "fit to scene"
       key and per-energy framing are refinements.

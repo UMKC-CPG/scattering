@@ -27,7 +27,7 @@ requires-python = ">=3.10"
 #   1. A console script backed by a module inside the package, as
 #      below. Gives the user a bare `project` command after install.
 #   2. Standalone scripts in src/scripts/, each paired with its own
-#      <name>rc.py defaults file (see src/scripts/XYZ.py). Run
+#      <name>rc.py defaults file (see src/scripts/scsim.py). Run
 #      directly, no install step needed.
 #
 # Uncomment and point at a real module once it exists; leaving a
