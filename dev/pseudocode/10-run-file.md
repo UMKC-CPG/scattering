@@ -6,7 +6,7 @@
 > **Governs:** `src/scattering/run/run_spec.py`,
 > `src/scattering/run/serialization.py`,
 > `src/scattering/run/schema.py`, `src/scattering/run/rc.py`,
-> `src/scripts/scsimrc.py`; and the resolution step that
+> `src/scattering/defaults/scsimrc.py`; and the resolution step that
 > `src/scattering/run/driver.py` hands over (10.2).
 > **Status:** draft.
 
@@ -235,14 +235,19 @@ parameter by the rc safety factor (D10.6).
 
 ```
 function load_rc() -> RcSettings:
-    # The XYZrc.py idiom (CLAUDE.md): ./scsimrc.py first, then
-    # $SCATTERING_RC/scsimrc.py; the script's own copy is the
-    # fallback so that a fresh checkout runs.
-    for directory in [cwd, $SCATTERING_RC, dirname(scsim.py)]:
+    # D10.7: ./scsimrc.py first, then $SCATTERING_RC/scsimrc.py, then
+    # the package's own copy. The last is located from rc.py's own
+    # resolved position (<package>/defaults/), NOT from the entry
+    # script: an installed copy has no script directory (A9.1), and
+    # the package is the one place that exists on both routes.
+    for directory in [cwd, $SCATTERING_RC, PACKAGE_DEFAULTS_DIR]:
         if exists(directory / "scsimrc.py"):
             import parameters_and_defaults from it
             return RcSettings(**parameters_and_defaults())
-    fail "scsimrc.py not found"
+    fail "scsimrc.py not found"      # unreachable unless the package
+                                     #   itself is damaged
+
+PACKAGE_DEFAULTS_DIR = dirname(resolved(rc.py)) / ".." / "defaults"
 
 record RcSettings:                  # extends pseudocode 6.3
     max_store_bytes        int      4e9
@@ -250,12 +255,17 @@ record RcSettings:                  # extends pseudocode 6.3
     r_max_safety_factor    float    3.0       (D10.6)
     default_palette        str      "light"
     default_camera         dict     {azimuth_deg: 35, elevation_deg: 20,
-                                     distance: 3.0}
+                                     distance: 4.0}
     default_panels         list     ["deflection", "cross_section",
-                                     "effective_potential", "telemetry"]
+                                     "effective_potential",
+                                     "error_budget", "telemetry"]
     window_size            (int, int)  (1280, 960)
     glyph_radius           float    0.02      (D11.6, natural units)
     output_dir             str      "."
+
+# The camera distance (3.0 -> 4.0, which stops the default view
+# clipping the R_max sphere) and the error_budget panel (P9.4) were
+# settled during v0.6 and v0.8; this record now agrees with them.
 
 function apply_defaults(raw, rc) -> raw:
     for table, keys in SCHEMA.items():
@@ -381,7 +391,8 @@ preset and explicit keys.
 
 ## 10.9 The rc file itself
 
-`src/scripts/scsimrc.py` follows `XYZrc.py`: a
+`src/scattering/defaults/scsimrc.py` (moved from `src/scripts/` with
+Route B; D10.7) follows `XYZrc.py`: a
 `parameters_and_defaults()` returning a dict with the keys of
 `RcSettings` (10.6), each commented with its meaning and the design
 section that owns it. It holds no physics defaults; those are in

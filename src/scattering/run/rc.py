@@ -7,10 +7,15 @@ output directory. It never holds physics defaults; those live in the schema
 table (`schema.py`), so that a run file is self-contained and reproduces the
 same physics on any machine.
 
-The lookup follows the template's XYZrc.py idiom: a `scsimrc.py` in the current
-directory first (so a user can drop a modified copy beside their data), then the
-directory named by $SCATTERING_RC, then the copy shipped beside the entry-point
-script, so that a fresh checkout runs with no setup.
+The lookup follows the template's XYZrc.py idiom with one change: a
+`scsimrc.py` in the current directory first (so a user can keep a
+modified copy beside their data), then the directory named by
+$SCATTERING_RC, then the copy shipped INSIDE THE PACKAGE, in
+`scattering/defaults/`. The last is not beside the entry-point script,
+because an installed copy of the tool has no script directory; the
+package is the one place that exists in a clone, in a linked suite,
+and in a pip-installed copy alike (design 10.7). `scsim --write-rc`
+copies that file to the working directory for editing.
 
 Attribution: this module is part of the scattering teaching tool.
 """
@@ -42,6 +47,10 @@ class RcSettings:
 
 RC_FILENAME = 'scsimrc.py'
 
+# The shipped defaults, located from this module's own resolved
+# position so that it is found however the package was obtained.
+PACKAGE_DEFAULTS_DIR = Path(__file__).resolve().parents[1] / 'defaults'
+
 
 def rc_search_path():
     """The directories searched, in order (pseudocode 10.6)."""
@@ -49,7 +58,7 @@ def rc_search_path():
     environment_dir = os.environ.get('SCATTERING_RC')
     if environment_dir:
         candidates.append(Path(environment_dir))
-    candidates.append(Path(__file__).resolve().parents[2] / 'scripts')
+    candidates.append(PACKAGE_DEFAULTS_DIR)
     return candidates
 
 

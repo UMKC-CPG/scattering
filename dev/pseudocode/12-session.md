@@ -6,7 +6,10 @@
 > ../design/12-scrubber-and-session.md).
 > **Governs:** `src/scattering/ui/session_state.py`,
 > `src/scattering/ui/controls.py`, `src/scattering/ui/vedo_controls.py`,
-> `src/scattering/ui/interactive_session.py`, `src/scripts/scsim.py`.
+> `src/scattering/ui/interactive_session.py`,
+> `src/scattering/cli/scsim.py`, `src/scattering/cli/examples.py`,
+> `src/scripts/scsim.py`, and the `[project]` tables of
+> `pyproject.toml`.
 > **Status:** draft.
 
 ---
@@ -276,16 +279,46 @@ orbit-plane drawable, which is why `tracked` is in the key.
 
 ---
 
-## 12.7 The entry point (`src/scripts/scsim.py`)
+## 12.7 The entry point (`cli/scsim.py`, and its two fronts)
 
-Follows the template's `XYZ.py` / `XYZrc.py` idiom exactly
-(`CLAUDE.md`, "Command Logging"): `record_command()` at module
-level, called from `__main__`; `main(argv=None)` for the tests.
+Follows the template's `XYZ.py` / `XYZrc.py` idiom (`CLAUDE.md`,
+"Command Logging"), with one change forced by ARCHITECTURE 4.13: the
+body lives in the package, because the command is reached in two
+ways and both must run the same code.
+
+**Seam inventory for the move.** What `src/scripts/scsim.py` holds
+today, and where each part goes:
+
+| Today in `scripts/scsim.py` | Goes to | Why |
+| --- | --- | --- |
+| module docstring (the `--help` text) | `cli/scsim.py` | argparse |
+| | | reads `__doc__` there |
+| `record_command()` | `cli/scsim.py` | both fronts call it |
+| `parse_command_line()`, `console_progress()`, `main()` | same | |
+| `sys.path.insert(resolved src/)` | stays in the script | only a |
+| | | clone or a link needs it; an installed copy is importable |
+| `if __name__ == "__main__"` | stays, and gains a twin, | |
+| | `console_main()` in `cli/scsim.py` | |
+| `rc` lookup beside the script | gone; P10.6 looks in the package | |
+
+Consumed unchanged: `load_rc`, `load_and_resolve`, `RunFileError`
+(P10); `build_results_store` (P6.4); `prepare_offscreen` (P11.6);
+`VedoRenderer` (P11); `ScriptedControls`, `VedoControls`,
+`run_session`, `parse_script` (12.5, 12.6). Tests that import `scsim`
+by putting `src/scripts` on the path keep working, because the script
+re-exports `main` and `record_command`.
 
 ```
-function main(argv=None) -> int:
-    args = parse(argv):
-        runfile                positional
+# ---- cli/scsim.py ----
+UTILITY_FLAGS = ("-h", "--help", "--examples", "--write-rc", "--check")
+
+function record_command():
+    if any flag of UTILITY_FLAGS in sys.argv: return     # not runs (D12.13)
+    try: append the dated argv block to ./command
+    except OSError: one line on stderr; continue          # see below
+
+function parse(argv):
+        runfile                optional positional
         --set TABLE.KEY=VALUE  repeatable
         --offscreen            no window; render to memory
         --frames N             run N ticks then exit (implies scripted
@@ -293,12 +326,28 @@ function main(argv=None) -> int:
         --screenshot PATH      after the last frame
         --script "tick:command,..."   scripted controls
         --palette, --tracked   overrides of [view] (viewing only)
+        --examples [DIR]       copy the packaged examples   (12.10)
+        --write-rc             copy the shipped rc file     (12.10)
+        --check                self-check of this computer  (12.10)
+    exactly one of {runfile, --examples, --write-rc, --check} must be
+        given; otherwise usage error
     if args.offscreen and not (args.frames or args.script):
         usage error: "--offscreen needs --frames N or --script ..."
         # Interactive controls on a window nobody can see would run
         # forever with no way to stop them; refuse before any work.
-    rc = load_rc()                                      # P10.6
-    resolved = load_and_resolve(args.runfile, args.set, rc)   # P10.8
+
+function main(argv=None) -> int:
+    args = parse(argv)
+    if args.examples is given: return copy_examples(args.examples)   # 12.10
+    if args.write_rc:          return copy_rc_file(cwd)              # 12.10
+    if args.check:             return self_check()                   # 12.10
+    try:
+        runfile  = locate_run_file(args.runfile)                     # 12.10
+        rc       = load_rc()                                         # P10.6
+        resolved = load_and_resolve(runfile, overrides, rc)          # P10.8
+    except RunFileError, FileNotFoundError as problem:
+        print "scsim: <problem>" on stderr; return 2     # a message, not
+                                                         #   a traceback
     print(f"results store: about {resolved.estimate_bytes/1e6:.0f} MB")
     store = build_results_store(resolved, progress=console_bar)   # P6.4
     if args.offscreen: prepare_offscreen()      # P11.6, before the
@@ -316,9 +365,24 @@ function main(argv=None) -> int:
     renderer.close()
     return 0
 
+function console_main():            # the pip route's front (A4.13)
+    record_command()
+    sys.exit(main())
+
+# ---- src/scripts/scsim.py: the suite's and the clone's front ----
+#!/usr/bin/env python3
+sys.path.insert(0, resolved(__file__).parents[1])    # src/
+from scattering.cli.scsim import main, record_command
 if __name__ == "__main__":
     record_command()
     sys.exit(main())
+
+# ---- pyproject.toml ----
+[project.scripts]  scsim = "scattering.cli.scsim:console_main"
+[project] dependencies = the modules this package imports, with lower
+    bounds no tighter than the suite's requirements.in (A9.1); h5py
+    under the "batch" extra, pytest under "test"
+[tool.setuptools.package-data] scattering.examples = ["*.toml"]
 ```
 
 **The command log must not end the run either.** `record_command()`
@@ -335,7 +399,8 @@ run the physics.
 ## 12.8 Verification
 
 `tests/unit/test_session_state.py`,
-`tests/integration/test_session.py`, `tests/integration/test_scsim.py`:
+`tests/integration/test_session.py`; the entry point's own tests are
+in 12.10:
 
 - `advance` stops at either end with `loop` off and wraps with it
   on; `step` pauses; `jump` clamps; `set_rate` stays in `[1, 16]`.
@@ -368,3 +433,112 @@ are not in this section. Both are additions to `apply` that call
 `resolve` and `build_results_store` and swap `session.store`; the
 loop and the state record need no change for them, which is why
 the store is a field of `Session` and not a global.
+
+---
+
+## 12.10 Examples, the rc copy, and the self-check (`cli/examples.py`)
+
+Specifies D12.13. Everything here finds its files THROUGH THE PACKAGE
+and never relative to a script or the working directory; that is the
+whole of what makes a clone, a linked suite, and an installed copy
+behave alike.
+
+```
+function example_files() -> dict name -> path:
+    # importlib.resources.files("scattering.examples"), every *.toml,
+    # keyed by stem; sorted by name.
+
+function locate_run_file(argument) -> path:
+    if exists(argument): return argument              # a real file wins
+    if argument has no directory part:
+        stem = argument without a trailing ".toml"
+        if stem in example_files():
+            note on stderr: "using the packaged example <path>"
+            return example_files()[stem]
+    raise FileNotFoundError(
+        "<argument>: no such run file. Packaged examples: <names>. "
+        "Run one by name (scsim <name>), or copy them here with "
+        "scsim --examples.")
+
+function copy_without_overwriting(sources, directory) -> int:
+    # Shared by the two copiers. Returns an exit status.
+    try: create directory if missing
+    for source in sources:
+        target = directory / basename(source)
+        if exists(target): print "kept   <target> (already here)"
+        else:              copy; print "wrote  <target>"
+    on OSError: print "cannot write in <directory> (<why>); choose a
+        directory you can write, for example: scsim --examples
+        ~/scattering-runs"; return 1
+    return 0
+
+function copy_examples(directory) -> int:
+    return copy_without_overwriting(example_files().values(), directory)
+
+function copy_rc_file(directory) -> int:
+    return copy_without_overwriting([PACKAGE_DEFAULTS_DIR/"scsimrc.py"],
+                                    directory)                 # P10.6
+
+function self_check() -> int:                      # writes no file
+    print python version, platform, and for each declared dependency
+        its installed version or "MISSING"
+    if any MISSING: print RESULT: FAIL -- <which>; return 1
+    try:
+        t0 = now
+        rc = load_rc()
+        resolved = load_and_resolve(example_files()["rutherford"],
+            ["fidelity.n_samples=40", "fidelity.n_deflection_points=60"],
+            rc)                                    # the real path, small
+        store = build_results_store(resolved)
+        print f"built {K} energies x {N} particles in {now - t0:.1f} s"
+        prepare_offscreen()                        # P11.6
+        renderer = VedoRenderer(palette, (640, 480), offscreen=True,
+                                panels=())
+        run_session(resolved, store, ScriptedControls([], 2), renderer, rc)
+        image = renderer.screenshot(as_array=True); renderer.close()
+    except Exception as problem:
+        print RESULT: FAIL -- <type>: <problem>; return 1
+    if image is uniform:
+        print RESULT: FAIL -- the picture is blank: no working OpenGL
+            context for offscreen drawing on this computer; return 1
+    print RESULT: PASS; return 0
+```
+
+`self_check` catches every exception on purpose: its one job is to
+turn whatever goes wrong on an unfamiliar computer into a line a
+student can send to the instructor.
+
+### Verification
+
+`tests/integration/test_scsim_cli.py`,
+`tests/unit/test_installed_copy.py`:
+
+- `example_files()` is non-empty, every entry resolves with
+  `load_and_resolve`, and its set of names equals the `*.toml` names
+  in `runs/` (the link and the package are the same files).
+- `locate_run_file`: an existing path is returned unchanged; a bare
+  packaged name with and without `.toml` returns the packaged path; a
+  local file of the same name wins; a name with a directory part, or
+  an unknown name, raises with the examples listed.
+- `copy_examples` into an empty directory writes every example;
+  a second call writes nothing and reports each as kept; an edited
+  copy is left unchanged; a read-only directory returns 1 with the
+  remedy and no traceback.
+- `copy_rc_file` writes a file that `load_rc([that directory])`
+  loads, equal to the package defaults.
+- `main(["no_such.toml"])` returns 2 and prints the examples;
+  `main([])` and `main(["x.toml", "--examples"])` are usage errors.
+- `record_command` writes nothing when a utility flag is present.
+- `main(["--check"])` returns 0, prints `RESULT: PASS`, and leaves
+  the working directory empty (skips where no GL context exists).
+- **The installed-copy guarantee (A8.6(5)).** `load_rc` succeeds with
+  the search restricted to the package; the object named by
+  `[project.scripts] scsim` imports and is callable; every top-level
+  third-party module imported anywhere under `src/scattering/` is
+  covered by `[project] dependencies` or an extra; and
+  `src/scripts/scsim.py` imports nothing but the standard library and
+  `scattering.cli`.
+- Manual, recorded in `dev/notes/`: build a wheel, install it in a
+  fresh virtual environment outside the repository, and run
+  `scsim --check`, `scsim --examples`, and `scsim rutherford` there.
+

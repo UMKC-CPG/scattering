@@ -74,36 +74,52 @@ tests/        Test suite (pytest)
 
 ## Installing
 
-The tool is one member of the
-[`physdemo`](https://github.com/UMKC-CPG/physdemo) suite of course
-demonstration tools, which provides the Python environment and puts
-every tool's commands on the `PATH`. On any computer with `git`,
-`bash`, and Python 3.10 or later:
+There are two ways, for two situations; they run the same code.
+
+**On your own computer (Windows, macOS, or Linux).** You need Python
+3.10 or later. Make an environment, install the tool into it, and
+check that the computer can draw:
 
 ```bash
-git clone https://github.com/UMKC-CPG/physdemo.git
-git clone https://github.com/UMKC-CPG/scattering.git
-physdemo/install.sh --prefix ~/physdemo  # environment + activate.sh
-physdemo/install_tool.sh --prefix ~/physdemo scattering
+python -m venv physdemo
+source physdemo/bin/activate        # Windows: physdemo\Scripts\activate
+pip install https://github.com/UMKC-CPG/scattering/archive/refs/heads/main.zip
+scsim --check
 ```
 
-The suite's README has the full procedure, what the computer needs,
-and how to check that it can draw.
+`pip` fetches the numerical and graphics libraries (about 1 GB) and
+creates the `scsim` command. No `git`, compiler, or GPU is needed.
+In later sessions only the `activate` line is repeated.
 
-It also runs without the suite, from any Python 3.10+ environment
-holding the packages in `physdemo/requirements.txt`.
+**On a shared computer (a teaching cluster).** The tool is one member
+of the [`physdemo`](https://github.com/UMKC-CPG/physdemo) suite, which
+one person installs for everybody: a single Python environment and a
+directory of commands. Nothing is installed per user, which suits
+small home directories and a read-only shared area. The instructor
+follows the suite's README; a student only turns it on:
+
+```bash
+source /path/to/the/shared/physdemo/activate.sh
+scsim --check
+```
 
 ## Running
 
 ```bash
-source ~/physdemo/activate.sh     # the CPG group aliases this: sdemo
-scsim runs/rutherford.toml
-physdemo-check                    # can this machine draw?
+scsim rutherford          # run a packaged example by name
+scsim --examples          # copy the example run files here, to edit
+scsim rutherford.toml     # run your edited copy
+scsim --write-rc          # copy the window/palette defaults here
+scsim --help
 ```
 
-Every runnable script appends its invocation to a `command` file in
-the working directory, so the exact call that produced a result can
-be recovered later.
+Run from a directory you can write in: saved run files, screenshots,
+and the `command` log go to the working directory. In a directory you
+cannot write, the tool still runs and says what it could not save.
+
+Every run appends its invocation to a `command` file in the working
+directory, so the exact call that produced a result can be recovered
+later.
 
 ## Testing
 

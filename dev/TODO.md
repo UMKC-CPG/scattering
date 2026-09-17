@@ -40,6 +40,20 @@ numbering so older cross-references still resolve.
 
 ## ARCHITECTURE
 
+- [ ] (A9.1) Route B has been run on Linux only. Have someone run
+      the README's four lines on **macOS** and on **Windows** and
+      send back what `scsim --check` prints; record the result in
+      A9.1 "What has been tried". Windows is the unknown: VTK's
+      wheel, the `Scripts\activate` line, and path handling.
+- [ ] (A9.1) Cut a release tag once Route B is confirmed, and point
+      the README's `pip install` URL at `refs/tags/<tag>` so that a
+      class installs a fixed version rather than `main`.
+- [ ] (A9.3, examples) `rutherford_disc` as shipped (20 000
+      particles) takes over ten minutes to reach its first frame. Find
+      where the time goes (store build, or 20 000 glyphs and traces),
+      then either make the scene cheap for a disc beam or ship the
+      example at a size that starts in seconds. Until then a student's
+      second command is a trap. Same measurement as the next entry.
 - [ ] (A9.3) Re-run `dev/spikes/render_budget.py` on an interactive
       compute node (`srun --partition=interactive`); the first run
       was on a loaded 1-CPU management node and is indicative only.

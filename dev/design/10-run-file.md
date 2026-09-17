@@ -226,6 +226,18 @@ list, the `r_max / b_max` safety factor, output directories, and
 cluster settings for the batch tier. It never holds physics
 defaults that the schema table above does not already state.
 
+It is searched for in three places, first found wins: the working
+directory, so that a user can keep a modified copy beside their
+data; the directory named by `$SCATTERING_RC`, for a machine-wide
+copy; and the package itself, `scattering/defaults/scsimrc.py`. The
+last is the documented set of defaults, and it is inside the package
+rather than beside the entry-point script because an installed copy
+of the tool (ARCHITECTURE 9.1, Route B) has no script directory: the
+one location that exists on both routes is the package. It follows
+that the search cannot fail, and that a user never needs to know
+where the package is installed: `scsim --write-rc` (Section 12.13)
+puts a copy in the working directory to edit.
+
 The command line accepts a run file path and a small set of
 overrides of the form `--set beam.n_particles=50000`, applied after
 loading and before resolving, so that a sweep over one parameter

@@ -250,3 +250,89 @@ seconds for a Tier-1 run, and the budget is shown first.
 change.** Rejected; 12.5 and Section 6.2.
 
 **An "exaggerate deflection" slider.** Rejected; 12.9.
+
+---
+
+## 12.13 The command line beyond a run file
+
+> **Serves:** VISION section 5 (a laptop and a read-only teaching
+> cluster are both intended places to run); ARCHITECTURE 4.13, 9.1,
+> 9.2. Added 2026-09-17 with Route B.
+
+Until now the command line took a run file and nothing else, which
+assumed the user had a clone: the example run files and the rc file
+were things to be found in the repository. A student who installed
+the tool with `pip`, or who is using a shared installation they did
+not make, has no idea where those files are and should not need to.
+Four small additions remove that assumption. None of them touches
+the physics, and none is a viewing or a run control (12.2); they are
+ways of *getting to* a run.
+
+**Where the examples live.** In the package, `scattering/examples/`,
+and they are located through the package (`importlib.resources`),
+never through a path relative to a script or to the working
+directory. That one rule makes a clone, a linked suite, and an
+installed copy behave identically.
+
+**`scsim --examples [DIR]`** copies every packaged example run file
+into `DIR` (default: the working directory) and exits. It never
+overwrites: a file already there is left alone and reported, because
+a student's edited copy is worth more than a fresh one. If `DIR`
+cannot be written the message says so and names the remedy. This is
+how a student obtains a file to edit on either route.
+
+**A packaged example by bare name.** `scsim rutherford` runs the
+packaged `rutherford.toml` directly. The rule is narrow so that it
+cannot surprise: it applies only when the argument names no existing
+file, has no directory part, and matches a packaged example with or
+without `.toml`; a file in the working directory always wins; and one
+line on standard error says which file is being used. The resolved
+run records that real path as its source (10.8), so the run is as
+reproducible as any other. This is what makes the very first run a
+single command.
+
+**`scsim --write-rc`** copies the shipped `scsimrc.py` into the
+working directory, again refusing to overwrite (Section 10.7).
+
+**`scsim --check`** answers "will it work on this computer" without
+the user knowing what to look for. It prints the Python version, the
+platform, and the version of every declared dependency; builds a
+deliberately small run from the packaged `rutherford` example
+(timing it); draws two frames offscreen; and reads the picture back
+to verify that it is not blank, since a window without a working
+OpenGL context accepts draw calls and draws nothing (11). It ends
+with one line, `RESULT: PASS` or `RESULT: FAIL -- <reason>`, and the
+matching exit status, and it writes no file. The small run is made
+with `--set`-style overrides of the packaged example, so the check
+exercises the same loading, resolving, and building code as a real
+run rather than a special path.
+
+**What is and is not logged.** `--examples`, `--write-rc`, and
+`--check` are not runs, and like `--help` they are not recorded in
+`command`.
+
+**Errors are messages.** A run file that does not exist, or that
+fails validation (10.6), ends the command with the message and exit
+status 2, not with a Python traceback. When the file does not exist
+the message lists the packaged examples and mentions `--examples`,
+because the likeliest cause is a student typing a name from the
+notes in a directory that does not hold the file.
+
+### Alternatives considered
+
+**Keep the examples at the top of the repository.** Rejected: an
+installed copy contains only the package, so they would not reach a
+laptop at all. The top-level `runs` remains as a symbolic link for
+the short path in a clone.
+
+**Download the examples on demand.** Rejected: a teaching cluster's
+nodes may have no network, and a run must not depend on one.
+
+**Fall back to a packaged example for any missing path.** Rejected:
+`scsim results/rutherford.toml` with a mistyped directory would
+silently run something else. Hence the bare-name restriction.
+
+**A separate `scsim-check` command.** Rejected for now: one command
+to remember is the point. The suite's `physdemo-check` remains the
+check of a whole shared environment, including a real window.
+

@@ -50,13 +50,15 @@ the design section it implements, status.
    *implemented*
 10. [`pseudocode/10-run-file.md`](pseudocode/10-run-file.md) —
     governs `run/run_spec.py`, `run/serialization.py`,
-    `run/schema.py`, `run/rc.py`, `scripts/scsimrc.py`, and the
+    `run/schema.py`, `run/rc.py`, `defaults/scsimrc.py`, and the
     resolution the driver hands over. Design 10. *implemented*
 11. [`pseudocode/11-scene.md`](pseudocode/11-scene.md) — governs
     `geometry/` and `render/`. Design 11. *implemented*
 12. [`pseudocode/12-session.md`](pseudocode/12-session.md) —
-    governs `ui/` and `scripts/scsim.py`. Design 12. *implemented*
-13. `pseudocode/13-batch.md` — `sinks/`, `scripts/scbatch.py`.
+    governs `ui/`, `cli/`, the front `scripts/scsim.py`, and the
+    `[project]` tables of `pyproject.toml`. Design 12. *implemented*
+13. `pseudocode/13-batch.md` — `sinks/`, `cli/scbatch.py` and its
+    front `scripts/scbatch.py` (as P12.7 does for `scsim`).
     Design 13. *planned*
 
 Status is one of: planned, draft, reviewed, implemented, superseded.

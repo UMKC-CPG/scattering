@@ -22,10 +22,13 @@ scattering/
     TODO.md           Task list by level
     notes/            Dated working notes (not binding)
     figures/          Diagrams and their editable sources
-  runs/               Ready-to-run example run files (TOML)
+  runs                Symbolic link to src/scattering/examples/
   src/
-    scattering/       The importable library (Section 3)
-    scripts/          Command-line entry points and rc files
+    scattering/       The importable library (Section 3), including
+      cli/            the entry points' bodies (Section 4.13),
+      defaults/       the shipped rc file (Section 7), and
+      examples/       the example run files (TOML)
+    scripts/          Thin executable fronts for cli/ (Section 4.13)
   tests/
     unit/             One module under test per file
     integration/      Several modules together, or an entry point
@@ -40,6 +43,16 @@ scattering/
 Simulation output (HDF5, video, frames) is regenerable from a run
 file and is excluded from version control; the run file that produced
 it is what is tracked (Section 9.4).
+
+**Everything the tool needs at run time lives under
+`src/scattering/`,** because that directory is all that an installed
+copy contains (Section 9.1): the code, the shipped rc defaults, and
+the example run files. `runs` at the top level is kept as a symbolic
+link so that `runs/rutherford.toml` remains the short path it has
+always been in a clone; it is a convenience of a checkout and nothing
+may depend on it. (On a Windows checkout without symbolic-link
+support it appears as a small text file. Windows users are served by
+the installed route and `scsim --examples`, not by a clone.)
 
 ---
 
@@ -332,17 +345,38 @@ stages; `results_store.py` is the Section 5.3 boundary.
 | `ui/controls.py` | Widgets for beam, potential, and view |
 | `ui/interactive_session.py` | The interactive loop |
 
-### 4.13 `scripts/` — Entry points
+### 4.13 `cli/` and `scripts/` — Entry points
 
-| Script | Purpose |
+An entry point is reached in two ways (Section 9.1), and both must
+run the same code. So the body of each command is a module in the
+library, and what differs is only the few lines that start it.
+
+| Module | Purpose |
 | --- | --- |
-| `scsim.py` | Launch the interactive tool (Tier 1) |
-| `scsimrc.py` | Resource-control defaults for `scsim.py` |
-| `scbatch.py` | Run a run file as a batch job (Tier 2, later) |
-| `scbatchrc.py` | Resource-control defaults for `scbatch.py` |
+| `cli/scsim.py` | Body of the interactive tool (Tier 1): argument |
+| | parsing, `main(argv)`, `record_command()`, `console_main()` |
+| `cli/examples.py` | Finds and copies the packaged example run |
+| | files and the shipped rc file |
+| `cli/scbatch.py` | Body of the batch tool (Tier 2, later) |
 
-Each script follows the `XYZ.py` / `XYZrc.py` idiom of the template,
-logs its invocation to `command`, and holds no physics.
+| Front | How it is reached |
+| --- | --- |
+| `scripts/scsim.py` | Executable script; the `physdemo` suite links |
+| | it, and a clone runs it directly. Puts `src/` on the path from |
+| | its resolved location, then calls `cli.scsim`. |
+| console script `scsim` | Declared in `pyproject.toml`; created by |
+| | `pip install`. Calls `cli.scsim.console_main`. |
+
+Both fronts log the invocation to `command` and then call
+`main()`; `main(argv)` itself never logs, so the test suite can call
+it freely (`CLAUDE.md`, "Command Logging"). Neither the fronts nor
+`cli/` hold any physics. `cli/` sits at the top of the dependency
+graph, where `scripts/` was, and nothing imports it.
+
+The shipped rc file moves with the code it configures: it is
+`defaults/scsimrc.py` inside the package (Section 7), not a file
+beside the script, because an installed copy has no `scripts/`
+directory to look in.
 
 ---
 
@@ -352,7 +386,8 @@ Dependencies point downward only. No module may import from a group
 listed above it, and this is tested (Section 8.6).
 
 ```
-  scripts/
+  scripts/  (fronts only; import cli/ and nothing else)
+  cli/
     +-- ui/
     |     +-- render/
     |     +-- sinks/
@@ -467,7 +502,13 @@ rule.
 **The rc file** (`scsimrc.py`) holds what is *machine-dependent and
 rarely changed*: filesystem paths, output directories, default window
 size, preferred palette, cluster and queue settings, and defaults for
-anything below.
+anything below. It is looked for in the working directory, then in
+`$SCATTERING_RC`, and last in the package itself
+(`scattering/defaults/scsimrc.py`), which is the documented set of
+defaults and is always present, in a clone and in an installed copy
+alike. `scsim --write-rc` copies that file into the working directory
+for a user who wants to change it; nobody should need to know where
+the package is installed.
 
 **The run file** (TOML) holds the *physics*: the potential and its
 parameters or preset, the beam, the detector, the integrator and
@@ -587,31 +628,40 @@ Mechanically checkable, so tested rather than left to discipline:
 4. **The reachability guarantee of Section 4.7.** No code path
    returns a recovered `V(r)` inside `r_min` without the "unknown"
    marker.
+5. **The installed-copy guarantee of Section 9.1.** Everything a run
+   needs is inside the package: the rc file loads with the search
+   restricted to the package, every example run file is found
+   through the package and resolves, the console script named in
+   `pyproject.toml` imports, and every third-party module the
+   package imports is a declared dependency. `runs/` and the
+   packaged examples are the same files.
 
 ---
 
 ## 9. Build System
 
-### 9.1 Language and environment
+### 9.1 Language, environment, and the two ways in
 
-Python 3.10 or later, NumPy-based numerical core. The tool is one
-member of the **`physdemo` suite** (`github.com/UMKC-CPG/physdemo`):
-a set of course demonstration tools that share one Python
-environment and one `bin/` directory of commands. The suite, not
-this repository, owns the environment; this repository states what
-it needs and obeys the suite's three rules for a tool.
+Python 3.10 or later, NumPy-based numerical core. The tool can reach
+a user in two ways. They exist because the two intended places
+(`VISION.md` section 5) want opposite things, and they run the same
+code (Section 4.13).
 
-**What the suite provides.** One virtual environment built from a
-pinned `requirements.txt`; a `bin/` directory of symbolic links, one
-per command, named without `.py`; and an `activate.sh` that puts both
-on the `PATH`. Nothing in it is specific to one computer: the prefix
-is wherever `install.sh` was pointed, and notes about a particular
-site (paths on the group's cluster, its measured frame rates, how a
-display is reached) live in the suite's `site/` directory and nowhere
-in this repository.
+**Route A: the `physdemo` suite, for a shared computer.** The tool
+is one member of the suite (`github.com/UMKC-CPG/physdemo`): a set of
+course demonstration tools that share one Python environment and one
+`bin/` directory of commands. One person installs the suite; everyone
+else only sources its `activate.sh`. Nothing is installed per user,
+which is what a teaching cluster with small home quotas and a
+read-only shared directory requires. The suite provides one virtual
+environment built from a pinned `requirements.txt`, a command per
+entry point named without `.py`, and an `activate.sh` that puts both
+on the `PATH`. Nothing in it is specific to one computer; notes about
+a particular site live in the suite's `site/` directory and nowhere
+in this repository. The tool is *linked*, never copied and never
+pip-installed into the suite, so a clone stays live.
 
-**The three rules this tool obeys,** so that `install_tool.sh` can
-link it and the link works:
+The rules this tool obeys so that the suite can link it:
 
 1. Every entry point under `src/scripts/` begins with
    `#!/usr/bin/env python3` and is executable, so it runs by name
@@ -620,70 +670,106 @@ link it and the link works:
    location (`Path(__file__).resolve()`), never from the working
    directory and never from the unresolved path, which would name
    the suite's link to the script rather than the file.
-3. The rc file is found beside the resolved script when no
-   machine-local copy exists (Section 7), so a linked command needs
-   no configuration step.
+3. The shipped defaults are inside the package (Section 7), so a
+   linked command needs no configuration step.
 
-No absolute path appears in the source, the tests, or the run files.
+**Route B: `pip install`, for a personal computer.** A laptop has one
+user, no shared directory, and quite possibly no `bash` (Windows), so
+the suite's shell scripts are the wrong tool. There the tool installs
+like any Python package, with its dependencies, into an environment
+the user makes:
 
-| Dependency | Version pinned | Purpose |
+```
+python -m venv physdemo
+source physdemo/bin/activate        (Windows: physdemo\Scripts\activate)
+pip install https://github.com/UMKC-CPG/scattering/archive/refs/heads/main.zip
+scsim --examples                    (copies the example run files here)
+scsim rutherford.toml
+```
+
+The archive URL needs no `git` on the laptop; `pip install
+git+https://github.com/UMKC-CPG/scattering` is equivalent where `git`
+exists, and a release is the same URL with `refs/tags/<tag>`. `pip`
+creates the `scsim` command from the console script declared in
+`pyproject.toml`, on every operating system, so nothing here depends
+on a shell.
+
+This is why everything the tool needs at run time is inside the
+package (Section 1), and why `pyproject.toml` **declares the
+dependencies**: on this route nobody else will supply them.
+
+**Who owns the versions.** The suite's `requirements.in` is the
+single statement of what the course tools need; `pyproject.toml`
+repeats the subset this tool imports, with lower bounds no tighter
+than the suite's, and the suite's `requirements.txt` pins what was
+tested. A dependency this tool needs and the suite lacks is added to
+the suite first. Route B installs the newest versions that satisfy
+the bounds, which is the right behaviour on a laptop and means a
+breaking release of a dependency shows up there first; the pinned
+set is the known-good fallback (`pip install -r` the suite's
+`requirements.txt`, then this tool with `--no-deps`).
+
+| Dependency | Pinned in the suite | Purpose |
 | --- | --- | --- |
 | `numpy` | 2.2.6 | Arrays, the results store |
 | `scipy` | 1.15.3 | Integrators, quadrature for inversion |
 | `vedo` | 2026.6.1 | Interactive 3D rendering |
 | `vtk` | 9.6.2 | Rendering engine beneath vedo |
-| `h5py` | 3.16.0 | HDF5 output for the batch tier |
 | `pint` | 0.24.4 | Units at the boundary (Section 6.6) |
 | `tomli-w` | 1.2.0 | Writing TOML run files |
 | `matplotlib` | 3.10.9 | The cross-section and `V(r)` plots |
-| `pytest` | 9.1.1 | Test suite |
+| `h5py` | 3.16.0 | HDF5 output; the `batch` extra (Tier 2) |
+| `pytest` | 9.1.1 | Test suite; the `test` extra |
 
-The pins are the suite's; this table records what the tool was
-developed and tested against. Reading TOML uses the `tomli` backport
-on the 3.10 floor and `tomllib` on 3.11+. Deliberately not
-dependencies: `numba` and `mpi4py` (FD5, deferred behind the orbit
-boundary), and any GUI toolkit beyond what vedo provides.
+Reading TOML uses the `tomli` backport on the 3.10 floor and
+`tomllib` on 3.11+. Deliberately not dependencies: `numba` and
+`mpi4py` (FD5, deferred behind the orbit boundary), and any GUI
+toolkit beyond what vedo provides.
 
-A dependency this tool needs and the suite lacks is added to the
-suite's `requirements.in`, not installed on the side: one environment
-for every tool is the point, and a tool that needs a conflicting
-version is the signal to discuss a second suite, not to fork quietly.
+No absolute path appears in the source, the tests, or the run files.
+
+**What has been tried.** Route A on Linux with Python 3.10, including
+from a read-only installation with an empty home directory. Route B
+on Linux. Neither route has yet been run on macOS or Windows; the
+first person to do so should run `scsim --check` (Section 9.2) and
+report what it prints.
 
 **History.** Through `v0.8-detector` the tool ran in the virtual
-environment built for the rigid-body tool (`$CPG_VENV_RIGID`). The
-suite replaced that arrangement; the package versions are unchanged.
+environment built for the rigid-body tool, then in the suite alone.
+Route B was added when laptops became an intended place to run.
 
 ### 9.2 Running
 
 ```bash
+# Route A.
 sdemo          # alias for:  source <suite prefix>/activate.sh
                # (or, where Lmod is used:  module load cpg_physdemo)
+# Route B.
+source physdemo/bin/activate
 
-# Tier 1: interactive exploration. Any directory; no paths to recall
-# beyond the run file's own.
+# Then, identically on both routes:
+scsim --check                  # can this computer run and draw it?
+scsim --examples               # copy the example run files here
+scsim rutherford.toml          # Tier 1: interactive exploration
+scsim rutherford               # a packaged example, by bare name
+scsim --write-rc               # copy the rc defaults here, to edit
+scbatch rutherford.toml        # Tier 2: batch run (later)
+
+# In a clone, from the repository root:
 scsim runs/rutherford.toml
-
-# Tier 2: batch run from a run file (later).
-scbatch runs/rutherford.toml
-
-# What is installed, and whether this machine can draw:
-physdemo
-physdemo-check              # add --onscreen to open a real window
-
-# Tests, from the repository root.
 pytest tests/ -v
 ```
 
-Without the suite — a fresh clone on another computer — the tool
-runs from any environment holding the packages above:
-`python3 -m venv .venv && source .venv/bin/activate && pip install
--r <physdemo>/requirements.txt`, then `src/scripts/scsim.py
-runs/rutherford.toml`.
+`scsim --check` is the one-line answer to "will it work here": it
+reports the versions in use, builds a small run, draws it offscreen,
+and verifies that the picture is not blank. On Route A the suite's
+`physdemo-check` does the same for the environment as a whole and can
+also time a real window.
 
-**Offscreen drawing** (`scsim --offscreen --frames N`, the tests, the
-spikes) chooses VTK's window class by the rule of pseudocode 11.6:
-EGL on Linux whenever offscreen drawing is asked for, nothing on
-macOS or Windows.
+**Offscreen drawing** (`scsim --offscreen --frames N`, `--check`, the
+tests, the spikes) chooses VTK's window class by the rule of
+pseudocode 11.6: EGL on Linux whenever offscreen drawing is asked
+for, nothing on macOS or Windows.
 
 ### 9.3 Rendering budget
 

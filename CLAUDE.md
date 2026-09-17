@@ -341,10 +341,13 @@ dev/              Design document chain (see dev/README.md)
   design/         One file per design section, indexed by DESIGN.md
   pseudocode/     One file per pseudocode section
   spikes/         Verified throwaway checks cited by the chain
-runs/             Ready-to-run example run files (TOML)
+runs              Symbolic link to src/scattering/examples/
 src/
-  scattering/     The importable library, by chain stage
-  scripts/        Entry points scsim.py / scbatch.py and rc files
+  scattering/     The importable library, by chain stage, plus:
+    cli/          Bodies of the commands (scsim; scbatch later)
+    defaults/     The shipped rc file, scsimrc.py
+    examples/     Ready-to-run example run files (TOML)
+  scripts/        Thin executable fronts for cli/
 tests/            pytest suite: unit/, integration/, regression/
 .scattering/      Machine-local rc overrides (never tracked)
 ```
@@ -352,24 +355,43 @@ tests/            pytest suite: unit/, integration/, regression/
 ## Language, Build, and Running
 
 Python 3.10+, NumPy core, vedo/VTK rendering, pint at the units
-boundary, TOML run files. The tool is a member of the `physdemo`
-suite (`../physdemo/`, `github.com/UMKC-CPG/physdemo`), which owns
-the shared environment and a `bin/` of commands linked to each tool's
-entry points (`dev/ARCHITECTURE.md` §9.1). `sdemo` is the shell alias
-that sources the suite's `activate.sh`.
+boundary, TOML run files. The tool reaches a user in two ways that
+run the same code (`dev/ARCHITECTURE.md` §9.1): **Route A**, the
+`physdemo` suite (`../physdemo/`, `github.com/UMKC-CPG/physdemo`),
+which owns a shared environment and links `src/scripts/scsim.py` —
+for a shared computer, and for development here (`sdemo` sources the
+suite's `activate.sh`); and **Route B**, `pip install` of this
+repository, which creates `scsim` from `pyproject.toml` — for a
+laptop, including Windows.
 
 ```bash
-sdemo                                # activate the suite
-scsim runs/rutherford.toml           # Tier 1, by name, from anywhere
+sdemo                                # activate the suite (Route A)
+scsim --check                        # can this computer run and draw?
+scsim rutherford                     # a packaged example, by name
+scsim runs/rutherford.toml           # the same file, in a clone
 dev/spikes/coulomb_closed_forms.py   # re-run a spike
 ```
 
-Entry points under `src/scripts/` MUST keep the suite's three rules:
-a `#!/usr/bin/env python3` first line and the executable bit; the
-library located from `Path(__file__).resolve()` (the command is
-normally run through a symbolic link); the rc file found beside the
-resolved script. Put no absolute path and nothing specific to one
-cluster in this repository; site notes belong in `physdemo/site/`.
+Rules that keep both routes working, and that are tested
+(`tests/unit/test_installed_copy.py`):
+
+- **Everything a run needs is inside `src/scattering/`,** because
+  that is all `pip install` delivers: code, `defaults/scsimrc.py`,
+  `examples/*.toml`. Find such files through the package
+  (`importlib.resources`, or a path from a module's own resolved
+  `__file__`), never relative to a script or the working directory.
+- **A command's body is a module in `cli/`.** `src/scripts/<name>.py`
+  is only a front: shebang, executable bit, `src/` put on the path
+  from `Path(__file__).resolve()` (it is normally run through a
+  symbolic link), then a call into `cli/`. It defines no function.
+- **A new third-party import is declared in `pyproject.toml`,** with
+  a lower bound no tighter than the suite's `requirements.in`, and
+  is added to the suite first.
+- Put no absolute path and nothing specific to one computer in this
+  repository; site notes belong in `physdemo/site/`.
+- Assume the working directory may be read-only and the home
+  directory small: a failed side-effect write is one line on standard
+  error, never a traceback, and never stops the physics.
 
 ## Testing
 

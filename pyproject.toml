@@ -1,13 +1,20 @@
-# Minimal packaging: enough to register the console command and make
-# the src/ layout importable.
+# Packaging for the second of the two ways this tool reaches a user
+# (dev/ARCHITECTURE.md section 9.1):
 #
-# Dependencies are DELIBERATELY omitted when the numerical environment
-# (conda, a module stack, a prebuilt venv) is pinned separately. In
-# that case install with `pip install -e . --no-deps` so pip does not
-# re-resolve numpy, h5py, or an MPI binding out from under the pinned
-# environment. If this project instead owns its dependencies, list
-# them under [project.dependencies] and drop the --no-deps advice
-# from README.md.
+#   Route A, a shared computer: the physdemo suite LINKS
+#     src/scripts/scsim.py and supplies the environment. Nothing in
+#     this file is used, and the tool is never pip-installed there.
+#   Route B, a personal computer: `pip install` of this repository.
+#     pip reads this file, installs the dependencies below, and creates
+#     the `scsim` command on Windows, macOS, and Linux alike.
+#
+# The dependencies are therefore DECLARED here, because on Route B
+# nobody else will supply them. The physdemo suite's requirements.in is
+# the single statement of what the course tools need: the lower bounds
+# below repeat the subset this package imports and must be no tighter
+# than the suite's. To install against a pinned, tested set instead,
+# `pip install -r <physdemo>/requirements.txt` and then this package
+# with `--no-deps`.
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -19,26 +26,38 @@ version = "0.1.0"
 description = "Teaching tool for classical scattering and its inversion"
 requires-python = ">=3.10"
 license = {text = "GPL-3.0-or-later"}
-# dependencies = ["numpy", "h5py"]
+readme = "README.md"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "matplotlib>=3.8",
+    "vedo>=2025.5",
+    "vtk>=9.4",
+    "pint>=0.24",
+    "tomli>=2.0; python_version < '3.11'",
+    "tomli_w>=1.0",
+]
 
-# The front door. See dev/ARCHITECTURE.md section 4 for every entry
-# point. Two conventions are in use in this group, and either is
-# fine so long as the choice is recorded in ARCHITECTURE section 4:
-#
-#   1. A console script backed by a module inside the package, as
-#      below. Gives the user a bare `project` command after install.
-#   2. Standalone scripts in src/scripts/, each paired with its own
-#      <name>rc.py defaults file (see src/scripts/scsim.py). Run
-#      directly, no install step needed.
-#
-# Uncomment and point at a real module once it exists; leaving a
-# console script aimed at a missing module breaks `pip install -e .`.
-#
-# [project.scripts]
-# scsim = "scattering.cli:main"
+[project.optional-dependencies]
+batch = ["h5py>=3.10"]          # Tier 2 HDF5 output (design 13; later)
+test = ["pytest>=8.0"]
+
+# The front door on Route B. The command's body is a module inside the
+# package (dev/ARCHITECTURE.md section 4.13), so that this console
+# script and the executable src/scripts/scsim.py run the same code.
+[project.scripts]
+scsim = "scattering.cli.scsim:console_main"
+
+[project.urls]
+Repository = "https://github.com/UMKC-CPG/scattering"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# The example run files are data inside the package, so that they are
+# installed with it and `scsim --examples` can find them anywhere.
+[tool.setuptools.package-data]
+"scattering.examples" = ["*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

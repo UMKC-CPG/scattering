@@ -1,147 +1,39 @@
 #!/usr/bin/env python3
 
-"""scsim -- the interactive scattering tool (Tier 1).
+"""scsim -- the executable front of the interactive scattering tool.
 
-Loads a run file, builds the results store (every orbit at every energy,
-precomputed; ARCHITECTURE section 3), and opens the vedo window with the time
-scrubber and the energy slider. Pseudocode section 12.7 governs this script.
+This file is deliberately almost empty. The command's body is
+`scattering.cli.scsim` (pseudocode 12.7), because the tool is reached in
+two ways that must run the same code (ARCHITECTURE 4.13, 9.1):
 
-Settings arrive from three places, each overriding the one before:
-the resource-control file scsimrc.py (machine-local, never physics), the run
-file (self-contained physics), and --set overrides on the command line. Every
-invocation is appended to a `command` file in the working directory so the exact
-call can be recovered later.
+- through THIS script, which the `physdemo` suite links into its
+  commands and which a clone runs directly, with nothing installed;
+- through the `scsim` console script that `pip install` creates, which
+  calls `scattering.cli.scsim.console_main`.
 
-    scsim runs/rutherford.toml
-    scsim runs/rutherford.toml --set fidelity.n_samples=200
-    scsim runs/rutherford.toml --offscreen --frames 5 \\
-             --screenshot out.png
+Three things here are load-bearing, and the suite depends on them: the
+`#!/usr/bin/env python3` first line and the executable bit, so the
+script runs by name with whatever Python the active environment
+provides; and the RESOLVED path below, because the script is normally
+run through a symbolic link, and the unresolved path would name the
+link rather than this file.
+
+Run `scsim --help` for the usage.
 """
 
-import argparse
 import sys
-from datetime import datetime
 from pathlib import Path
 
-# The library lives in src/scattering next to this scripts/ directory;
-# an installed package (pip install -e .) makes this a no-op.
+# The library is src/scattering/, beside this scripts/ directory. With
+# the package installed this line changes nothing; without it, this is
+# what lets the tool run from a fresh clone with no install step.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scattering.run import build_results_store, load_and_resolve, load_rc
-
-
-def record_command():
-    """Append this invocation to `command` in the working directory,
-    as a dated block naming the full argument vector. Called from the `__main__`
-    block, not from main(), so that the test suite calling
-    main(argv) never writes stray files. `--help` is not logged."""
-    if any(argument in ('-h', '--help') for argument in sys.argv):
-        return
-    # The log is a convenience and must never stop a run. The usual
-    # way to fail here is a student standing inside a shared, read-only
-    # installation, among the example run files (pseudocode 12.7).
-    try:
-        with open('command', 'a') as command_log:
-            timestamp = datetime.now().strftime('%b. %d, %Y: %H:%M:%S')
-            command_log.write(f'Date: {timestamp}\n')
-            command_log.write('Cmnd:')
-            for argument in sys.argv:
-                command_log.write(f' {argument}')
-            command_log.write('\n\n')
-    except OSError as problem:
-        print(f'note: cannot write ./command here ({problem.strerror}); '
-              'continuing without the command log', file=sys.stderr)
-
-
-def parse_command_line(command_line_args=None):
-    parser = argparse.ArgumentParser(
-        prog='scsim',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=__doc__,
-        epilog='Defaults are given in ./scsimrc.py or '
-               '$SCATTERING_RC/scsimrc.py.')
-    parser.add_argument('runfile', help='TOML run file (design section 10)')
-    parser.add_argument('--set', dest='overrides', action='append', default=[],
-        metavar='TABLE.KEY=VALUE', help='override one run-file key; repeatable')
-    parser.add_argument('--offscreen', action='store_true',
-                        help='render without a window')
-    parser.add_argument('--frames', type=int, default=0,
-        help='draw N frames with scripted controls, then ' 'exit')
-    parser.add_argument('--script', default='',
-                        help='scripted controls, "tick:command,..."')
-    parser.add_argument('--screenshot', default=None,
-                        help='write an image after the last frame')
-    parser.add_argument('--palette', default=None,
-                        help='override [view].palette')
-    parser.add_argument('--tracked', type=int, default=None,
-                        help='override [view].tracked_particle')
-    args = parser.parse_args(command_line_args)
-    if args.offscreen and not (args.frames or args.script):
-        # Interactive controls on a window nobody can see would run
-        # forever with no way to stop them; refuse before any work.
-        parser.error('--offscreen needs --frames N or --script "..." '
-                     'so that the run knows when to stop')
-    return args
-
-
-def console_progress(total):
-    """A one-line progress bar for the store build."""
-    state = {'done': 0}
-
-    def report(energy_index, particle_index):
-        state['done'] += 1
-        if state['done'] % max(1, total // 20) == 0 or \
-                state['done'] == total:
-            print(f'\r  orbits {state["done"]}/{total}', end='',
-                  file=sys.stderr, flush=True)
-            if state['done'] == total:
-                print(file=sys.stderr)
-    return report
-
-
-def main(command_line_args=None):
-    """Run the tool. Accepting an argument list lets the test suite
-    drive this without touching sys.argv."""
-    args = parse_command_line(command_line_args)
-    rc = load_rc()
-    overrides = list(args.overrides)
-    if args.palette:
-        overrides.append(f'view.palette="{args.palette}"')
-    if args.tracked is not None:
-        overrides.append(f'view.tracked_particle={args.tracked}')
-    resolved = load_and_resolve(args.runfile, overrides, rc)
-    print(f'results store: about {resolved.estimate_bytes / 1e6:.0f} MB',
-          file=sys.stderr)
-    total = (len(resolved.spec.beam.energies)
-             * resolved.spec.beam.n_particles_total())
-    store = build_results_store(resolved, progress=console_progress(total))
-
-    # Imported here so that `--help` and a run-file error never pay for VTK's
-    # import, which is slow on a shared filesystem.
-    from scattering.render.offscreen import prepare_offscreen
-    if args.offscreen:
-        # Before the renderer (and so VTK) is imported; this also
-        # covers a DISPLAY that is set but dead (pseudocode 11.6).
-        prepare_offscreen()
-    from scattering.render.vedo_renderer import VedoRenderer
-    from scattering.ui import ScriptedControls, VedoControls, run_session
-    from scattering.ui.vedo_controls import parse_script
-
-    renderer = VedoRenderer(resolved.spec.view.palette, rc.window_size,
-        offscreen=args.offscreen, panels=resolved.spec.view.panels)
-    if args.frames or args.script:
-        script = parse_script(args.script)
-        max_frames = args.frames or (max(t for t, _ in script) + 2)
-        controls = ScriptedControls(script, max_frames)
-    else:
-        controls = VedoControls(renderer.plotter)
-    run_session(resolved, store, controls, renderer, rc)
-    if args.screenshot:
-        renderer.screenshot(args.screenshot)
-    renderer.close()
-    return 0
-
+from scattering.cli.scsim import main, record_command     # noqa: E402
 
 if __name__ == '__main__':
+    # The invocation is logged here, at the real entry point, and never
+    # inside main(), so that the test suite can call main(argv) without
+    # leaving `command` files behind (CLAUDE.md, "Command Logging").
     record_command()
     sys.exit(main())

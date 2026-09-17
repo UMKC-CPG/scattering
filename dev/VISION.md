@@ -247,12 +247,25 @@ formula, and the Firsov-type inversion are all fair game, and rainbow
 and glory scattering are within reach once a potential with a well is
 added.
 
-The tool runs on the teaching cluster, not on student laptops. It
-uses the shared Python virtual environment already built for the
-rigid-body tool, which contains every dependency this project needs;
-a student activates that environment and runs the tool. The batch
-tier, when built, runs as a scheduled cluster job from the same
-input file and writes HDF5 for post-processing.
+The tool must run wherever a student is given to run it, and two
+places are intended: a student's **own laptop** (Windows, macOS, or
+Linux), provided that installing and running it there is close to
+effortless; and a **teaching cluster**, where one shared installation
+is read-only to students and a student's home directory is too small
+to hold the numerical libraries. Neither may be assumed, so the tool
+depends on no particular computer: it needs no GPU, writes only to
+the directory it is run from, and keeps working when even that
+directory cannot be written. It is developed on a research cluster,
+which is a convenience of the author and not a requirement. The
+batch tier, when built, runs from the same input file, as a
+scheduled job where there is a scheduler and as an ordinary command
+where there is not, and writes HDF5 for post-processing.
+
+*(Revised 2026-09-17. The first version of this paragraph said the
+tool runs on the teaching cluster and not on student laptops, in an
+environment built for the rigid-body tool. The class will not use
+that cluster, and laptops are wanted; `ARCHITECTURE.md` section 9
+says how both are served.)*
 
 ---
 

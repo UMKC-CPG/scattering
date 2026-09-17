@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Resource-control defaults for scsim.py (pseudocode 10.9).
+"""Resource-control defaults for scsim (pseudocode 10.9).
 
 This file holds the MACHINE-LOCAL settings of the interactive tool:
 things that depend on the computer, the display, or personal taste, and that
@@ -8,12 +8,14 @@ never affect a computed result. Physics defaults are not here; they live in the
 run-file schema (src/scattering/run/schema.py) so that a run file is
 self-contained (ARCHITECTURE section 7).
 
-It is looked up first in the current working directory, then in $SCATTERING_RC,
-then here; a user who wants a bigger window or a dark palette by default copies
-this file next to their data and edits it.
+It is looked up first in the current working directory, then in
+$SCATTERING_RC, then here, inside the package (design 10.7). A user who
+wants a bigger window or a dark palette by default runs
+`scsim --write-rc`, which copies this file into the working directory,
+and edits the copy; nobody needs to know where the package is.
 
 This file has no main() and is never run as an entry point, so it does not log
-to `command` the way scsim.py does.
+to `command` the way scsim does.
 """
 
 
@@ -56,5 +58,5 @@ def parameters_and_defaults():
 
 if __name__ == '__main__':
     # Running this file directly prints the defaults, which is a convenient way
-    # to check what scsim.py will start from.
+    # to check what scsim will start from.
     print(parameters_and_defaults())

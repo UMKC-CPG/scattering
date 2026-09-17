@@ -143,6 +143,10 @@ is the last lesson of P3.
 
 Follows the template's `XYZ.py` idiom: `scbatchrc.py` defaults,
 `--set` overrides as Section 10.7, the command logged to `command`.
+As for `scsim` (ARCHITECTURE 4.13), the body is `cli/scbatch.py`
+inside the package, reached both through the executable front
+`scripts/scbatch.py` and through a console script, and its shipped
+defaults are `defaults/scbatchrc.py`; `h5py` is the `batch` extra.
 It resolves the specification, prints the budget, builds the store
 with a progress line per energy, and attaches an `hdf5_sink` (and
 nothing else). Output goes to `DIR/<runfile-stem>.h5` and `.xmf`,

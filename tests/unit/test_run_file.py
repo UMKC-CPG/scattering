@@ -186,11 +186,11 @@ def test_load_rc_prefers_cwd(tmp_path, monkeypatch):
                      '    return {"max_store_bytes": 123}\n')
     monkeypatch.chdir(tmp_path)
     assert load_rc().max_store_bytes == 123
-    assert load_rc([REPO / 'src' / 'scripts']).max_store_bytes == \
+    assert load_rc([REPO / 'src' / 'scattering' / 'defaults']).max_store_bytes == \
         4_000_000_000
 
 
 def test_shipped_rc_loads():
-    rc = load_rc([REPO / 'src' / 'scripts'])
+    rc = load_rc([REPO / 'src' / 'scattering' / 'defaults'])
     assert rc.default_palette == 'light'
     assert rc.window_size == (1280, 960)
