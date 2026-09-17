@@ -12,9 +12,9 @@ file (self-contained physics), and --set overrides on the command line. Every
 invocation is appended to a `command` file in the working directory so the exact
 call can be recovered later.
 
-    scsim.py runs/rutherford.toml
-    scsim.py runs/rutherford.toml --set fidelity.n_samples=200
-    scsim.py runs/rutherford.toml --offscreen --frames 5 \\
+    scsim runs/rutherford.toml
+    scsim runs/rutherford.toml --set fidelity.n_samples=200
+    scsim runs/rutherford.toml --offscreen --frames 5 \\
              --screenshot out.png
 """
 
