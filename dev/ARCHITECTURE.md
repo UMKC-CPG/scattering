@@ -619,7 +619,7 @@ link it and the link works:
 2. An entry point finds the library from its own **resolved**
    location (`Path(__file__).resolve()`), never from the working
    directory and never from the unresolved path, which would name
-   the link in the suite's `bin/` rather than the file.
+   the suite's link to the script rather than the file.
 3. The rc file is found beside the resolved script when no
    machine-local copy exists (Section 7), so a linked command needs
    no configuration step.
