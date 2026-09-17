@@ -74,17 +74,26 @@ tests/        Test suite (pytest)
 
 ## Installing
 
+The tool is one member of the
+[`physdemo`](https://github.com/UMKC-CPG/physdemo) suite of course
+demonstration tools, which provides the Python environment and puts
+every tool's commands on the `PATH`:
+
 ```bash
-# If the numerical environment is built and pinned separately,
-# install without letting pip re-resolve it:
-pip install -e . --no-deps
+git clone https://github.com/UMKC-CPG/physdemo.git
+physdemo/install.sh                      # environment + activate.sh
+physdemo/install_tool.sh /path/to/scattering
 ```
+
+It also runs without the suite, from any Python 3.10+ environment
+holding the packages in `physdemo/requirements.txt`.
 
 ## Running
 
 ```bash
-source $CPG_VENV_RIGID
-python3 src/scripts/scsim.py runs/rutherford.toml   # planned
+source ~/physdemo/activate.sh     # the CPG group aliases this: sdemo
+scsim runs/rutherford.toml
+physdemo-check                    # can this machine draw?
 ```
 
 Every runnable script appends its invocation to a `command` file in

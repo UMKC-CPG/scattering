@@ -594,19 +594,39 @@ Mechanically checkable, so tested rather than left to discipline:
 
 ### 9.1 Language and environment
 
-Python 3.10, NumPy-based numerical core. The tool runs in the shared
-virtual environment already built for the rigid-body tool, which
-contains every dependency at the versions below. **There is no
-separate environment and no modulefile for this project**; the
-rigid-body tool's own documentation describes a modulefile that was
-never created, and this project does not repeat the claim.
+Python 3.10 or later, NumPy-based numerical core. The tool is one
+member of the **`physdemo` suite** (`github.com/UMKC-CPG/physdemo`):
+a set of course demonstration tools that share one Python
+environment and one `bin/` directory of commands. The suite, not
+this repository, owns the environment; this repository states what
+it needs and obeys the suite's three rules for a tool.
 
-```
-/cluster/VAST/rulisp-lab/cpg/virtual_envs/rigid/     the environment
-$CPG_VENV_RIGID                                      its activate script
-```
+**What the suite provides.** One virtual environment built from a
+pinned `requirements.txt`; a `bin/` directory of symbolic links, one
+per command, named without `.py`; and an `activate.sh` that puts both
+on the `PATH`. Nothing in it is specific to one computer: the prefix
+is wherever `install.sh` was pointed, and notes about a particular
+site (paths on the group's cluster, its measured frame rates, how a
+display is reached) live in the suite's `site/` directory and nowhere
+in this repository.
 
-| Dependency | Version present | Purpose |
+**The three rules this tool obeys,** so that `install_tool.sh` can
+link it and the link works:
+
+1. Every entry point under `src/scripts/` begins with
+   `#!/usr/bin/env python3` and is executable, so it runs by name
+   with whatever `python3` the activated environment provides.
+2. An entry point finds the library from its own **resolved**
+   location (`Path(__file__).resolve()`), never from the working
+   directory and never from the unresolved path, which would name
+   the link in the suite's `bin/` rather than the file.
+3. The rc file is found beside the resolved script when no
+   machine-local copy exists (Section 7), so a linked command needs
+   no configuration step.
+
+No absolute path appears in the source, the tests, or the run files.
+
+| Dependency | Version pinned | Purpose |
 | --- | --- | --- |
 | `numpy` | 2.2.6 | Arrays, the results store |
 | `scipy` | 1.15.3 | Integrators, quadrature for inversion |
@@ -618,29 +638,52 @@ $CPG_VENV_RIGID                                      its activate script
 | `matplotlib` | 3.10.9 | The cross-section and `V(r)` plots |
 | `pytest` | 9.1.1 | Test suite |
 
-Reading TOML uses the `tomli` backport on the 3.10 floor and
-`tomllib` on 3.11+. Deliberately not dependencies: `numba` and
-`mpi4py` (FD5, deferred behind the orbit boundary), and any GUI
-toolkit beyond what vedo provides.
+The pins are the suite's; this table records what the tool was
+developed and tested against. Reading TOML uses the `tomli` backport
+on the 3.10 floor and `tomllib` on 3.11+. Deliberately not
+dependencies: `numba` and `mpi4py` (FD5, deferred behind the orbit
+boundary), and any GUI toolkit beyond what vedo provides.
 
-Should this project's requirements ever diverge from the rigid-body
-tool's, the environment is forked at that moment and this section is
-updated; until then a shared course environment is the right thing.
+A dependency this tool needs and the suite lacks is added to the
+suite's `requirements.in`, not installed on the side: one environment
+for every tool is the point, and a tool that needs a conflicting
+version is the signal to discuss a second suite, not to fork quietly.
+
+**History.** Through `v0.8-detector` the tool ran in the virtual
+environment built for the rigid-body tool (`$CPG_VENV_RIGID`). The
+suite replaced that arrangement; the package versions are unchanged.
 
 ### 9.2 Running
 
 ```bash
-source $CPG_VENV_RIGID
+sdemo          # alias for:  source <suite prefix>/activate.sh
+               # (or, where Lmod is used:  module load cpg_physdemo)
 
-# Tier 1: interactive exploration.
-python3 src/scripts/scsim.py runs/rutherford.toml
+# Tier 1: interactive exploration. Any directory; no paths to recall
+# beyond the run file's own.
+scsim runs/rutherford.toml
 
 # Tier 2: batch run from a run file (later).
-python3 src/scripts/scbatch.py runs/rutherford.toml
+scbatch runs/rutherford.toml
 
-# Tests.
+# What is installed, and whether this machine can draw:
+physdemo
+physdemo-check              # add --onscreen to open a real window
+
+# Tests, from the repository root.
 pytest tests/ -v
 ```
+
+Without the suite — a fresh clone on another computer — the tool
+runs from any environment holding the packages above:
+`python3 -m venv .venv && source .venv/bin/activate && pip install
+-r <physdemo>/requirements.txt`, then `src/scripts/scsim.py
+runs/rutherford.toml`.
+
+**Offscreen drawing** (`scsim --offscreen --frames N`, the tests, the
+spikes) chooses VTK's window class by the rule of pseudocode 11.6:
+EGL on Linux whenever offscreen drawing is asked for, nothing on
+macOS or Windows.
 
 ### 9.3 Rendering budget
 

@@ -7,7 +7,7 @@ repository only so that the answer can be re-checked when the
 libraries, the formulas, or the conventions change.
 
 Run every spike from the repository root inside the shared
-environment (`source $CPG_VENV_RIGID`).
+environment (`sdemo`; ARCHITECTURE 9.2).
 
 ---
 
@@ -60,7 +60,7 @@ a formula error; it is the finite-`R_max` effect that design section
 to avoid. Cited from `ARCHITECTURE.md` §4.5.
 
 ```bash
-python3 dev/spikes/coulomb_closed_forms.py
+dev/spikes/coulomb_closed_forms.py
 ```
 
 ---
@@ -124,7 +124,7 @@ counts yield `V = −1/r` (the `Θ → −Θ` symmetry of (2.7)). Section 8
 must present the sign as a student's choice and show both fits.
 
 ```bash
-python3 dev/spikes/firsov_inversion.py
+dev/spikes/firsov_inversion.py
 ```
 
 ---
@@ -156,5 +156,5 @@ a fallback.
 
 ```bash
 unset DISPLAY
-python3 dev/spikes/render_budget.py --counts 50 200 500 1000
+dev/spikes/render_budget.py --counts 50 200 500 1000
 ```

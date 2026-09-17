@@ -346,21 +346,30 @@ tests/            pytest suite: unit/, integration/, regression/
 
 ## Language, Build, and Running
 
-Python 3.10, NumPy core, vedo/VTK rendering, pint at the units
-boundary, TOML run files. The tool runs in the shared virtual
-environment already built for the rigid-body tool; there is no
-separate environment and no modulefile (`dev/ARCHITECTURE.md` §9.1).
+Python 3.10+, NumPy core, vedo/VTK rendering, pint at the units
+boundary, TOML run files. The tool is a member of the `physdemo`
+suite (`../physdemo/`, `github.com/UMKC-CPG/physdemo`), which owns
+the shared environment and a `bin/` of commands linked to each tool's
+entry points (`dev/ARCHITECTURE.md` §9.1). `sdemo` is the shell alias
+that sources the suite's `activate.sh`.
 
 ```bash
-source $CPG_VENV_RIGID            # the shared course environment
-python3 src/scripts/scsim.py runs/rutherford.toml   # Tier 1
-python3 dev/spikes/coulomb_closed_forms.py          # re-run a spike
+sdemo                                # activate the suite
+scsim runs/rutherford.toml           # Tier 1, by name, from anywhere
+dev/spikes/coulomb_closed_forms.py   # re-run a spike
 ```
+
+Entry points under `src/scripts/` MUST keep the suite's three rules:
+a `#!/usr/bin/env python3` first line and the executable bit; the
+library located from `Path(__file__).resolve()` (the command is
+normally run through a symbolic link); the rc file found beside the
+resolved script. Put no absolute path and nothing specific to one
+cluster in this repository; site notes belong in `physdemo/site/`.
 
 ## Testing
 
 ```bash
-source $CPG_VENV_RIGID
+sdemo
 pytest tests/ -v
 ```
 
