@@ -307,6 +307,11 @@ files) when the test suite calls `main(argv)` directly.
 The `*rc.py` resource-control files and imported library modules
 (which have no `__main__`) are exempt. `command` is gitignored.
 
+The log is a convenience and MUST NOT stop a run. Where the working
+directory cannot be written — a student standing inside a shared,
+read-only installation — `record_command()` says so in one line on
+standard error and returns.
+
 ## What This Is
 
 An interactive, real-time teaching tool for **classical scattering**

@@ -121,3 +121,42 @@ def test_scsim_refuses_offscreen_without_an_end(monkeypatch, capsys):
         scsim.main([str(REPO / 'runs' / 'rutherford.toml'), '--offscreen'])
     assert refusal.value.code == 2
     assert '--frames' in capsys.readouterr().err
+
+
+@pytest.fixture
+def read_only_directory(tmp_path):
+    """A directory the test cannot write, as a student finds a shared
+    installation. Skips where permissions do not bind (root)."""
+    locked = tmp_path / 'shared'
+    locked.mkdir()
+    locked.chmod(0o555)
+    if os.access(locked, os.W_OK):
+        pytest.skip('this user can write a read-only directory')
+    yield locked
+    locked.chmod(0o755)
+
+
+def test_save_in_a_read_only_directory_does_not_end_the_session(
+        run, read_only_directory, capsys):
+    """P12.4: the save fails, says so, and the session runs on."""
+    resolved, store = run
+    renderer = _renderer(panels=())
+    rc = RcSettings(output_dir=str(read_only_directory))
+    controls = ScriptedControls([(1, 'save'), (2, 'track_next'),
+                                 (4, 'quit')], max_frames=6)
+    state = run_session(resolved, store, controls, renderer, rc)
+    renderer.close()
+    assert state.tracked == 1                # commands after the save ran
+    assert not list(read_only_directory.glob('*.toml'))
+    assert 'cannot write' in capsys.readouterr().err
+
+
+def test_command_log_in_a_read_only_directory_is_only_a_note(
+        read_only_directory, monkeypatch, capsys):
+    """P12.7: the command log is a convenience, never a reason to stop."""
+    monkeypatch.syspath_prepend(str(REPO / 'src' / 'scripts'))
+    import scsim
+    monkeypatch.chdir(read_only_directory)
+    monkeypatch.setattr(sys, 'argv', ['scsim', 'runs/rutherford.toml'])
+    scsim.record_command()                   # must not raise
+    assert 'continuing without the command log' in capsys.readouterr().err

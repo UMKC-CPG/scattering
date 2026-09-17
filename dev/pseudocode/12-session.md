@@ -177,6 +177,14 @@ function control_legend_lines() -> list of str:
     return [f"{key:>8}  {help}" for key, (_, help) in BINDINGS.items()]
 ```
 
+**`save` must not end the session.** The tool is routinely run from
+a directory the user cannot write — a shared, read-only installation
+on a teaching cluster, with the student standing among the example
+run files. If `write_back` raises an OS error, the session prints one
+line naming the directory and the remedy (run from a writable
+directory, or set `output_dir` in a local `scsimrc.py`) and carries
+on; the orbits on screen are worth more than the file.
+
 Every command above is a viewing control (D12.2, D12.7). Run
 controls — editing the beam, potential, or fidelity — are not bound
 to keys in the first version: they are made by editing the run file
@@ -312,6 +320,13 @@ if __name__ == "__main__":
     record_command()
     sys.exit(main())
 ```
+
+**The command log must not end the run either.** `record_command()`
+appends to `./command`. In a directory the user cannot write (the
+read-only installation above) it prints one line to standard error —
+"cannot write ./command here (…); continuing without the command
+log" — and returns. A convenience log is never a reason to refuse to
+run the physics.
 
 `scsimrc.py` is P10.9.
 

@@ -7,6 +7,7 @@ corrected.
 Attribution: this module is part of the scattering teaching tool.
 """
 
+import sys
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -50,7 +51,17 @@ class Session:
             if self.resolved.spec.meta else None
         stem = Path(source).stem if source else 'run'
         path = Path(self.rc.output_dir) / f'{stem}.resolved.toml'
-        write_back(resolved, path)
+        # A save that cannot be written must not end the session: the
+        # tool is routinely run from a shared, read-only installation
+        # (pseudocode 12.4). Say where, say the remedy, and carry on.
+        try:
+            write_back(resolved, path)
+        except OSError as problem:
+            print(f'save: cannot write {path} ({problem.strerror}). Run '
+                  'from a directory you can write, or set output_dir in '
+                  'a scsimrc.py there.', file=sys.stderr)
+            return None
+        print(f'save: wrote {path}', file=sys.stderr)
         return path
 
 

@@ -37,13 +37,20 @@ def record_command():
     main(argv) never writes stray files. `--help` is not logged."""
     if any(argument in ('-h', '--help') for argument in sys.argv):
         return
-    with open('command', 'a') as command_log:
-        timestamp = datetime.now().strftime('%b. %d, %Y: %H:%M:%S')
-        command_log.write(f'Date: {timestamp}\n')
-        command_log.write('Cmnd:')
-        for argument in sys.argv:
-            command_log.write(f' {argument}')
-        command_log.write('\n\n')
+    # The log is a convenience and must never stop a run. The usual
+    # way to fail here is a student standing inside a shared, read-only
+    # installation, among the example run files (pseudocode 12.7).
+    try:
+        with open('command', 'a') as command_log:
+            timestamp = datetime.now().strftime('%b. %d, %Y: %H:%M:%S')
+            command_log.write(f'Date: {timestamp}\n')
+            command_log.write('Cmnd:')
+            for argument in sys.argv:
+                command_log.write(f' {argument}')
+            command_log.write('\n\n')
+    except OSError as problem:
+        print(f'note: cannot write ./command here ({problem.strerror}); '
+              'continuing without the command log', file=sys.stderr)
 
 
 def parse_command_line(command_line_args=None):
