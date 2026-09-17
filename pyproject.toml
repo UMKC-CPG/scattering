@@ -18,6 +18,7 @@ name = "scattering"
 version = "0.1.0"
 description = "Teaching tool for classical scattering and its inversion"
 requires-python = ">=3.10"
+license = {text = "GPL-3.0-or-later"}
 # dependencies = ["numpy", "h5py"]
 
 # The front door. See dev/ARCHITECTURE.md section 4 for every entry

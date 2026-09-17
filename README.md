@@ -77,13 +77,18 @@ tests/        Test suite (pytest)
 The tool is one member of the
 [`physdemo`](https://github.com/UMKC-CPG/physdemo) suite of course
 demonstration tools, which provides the Python environment and puts
-every tool's commands on the `PATH`:
+every tool's commands on the `PATH`. On any computer with `git`,
+`bash`, and Python 3.10 or later:
 
 ```bash
 git clone https://github.com/UMKC-CPG/physdemo.git
-physdemo/install.sh                      # environment + activate.sh
-physdemo/install_tool.sh /path/to/scattering
+git clone https://github.com/UMKC-CPG/scattering.git
+physdemo/install.sh --prefix ~/physdemo  # environment + activate.sh
+physdemo/install_tool.sh --prefix ~/physdemo scattering
 ```
+
+The suite's README has the full procedure, what the computer needs,
+and how to check that it can draw.
 
 It also runs without the suite, from any Python 3.10+ environment
 holding the packages in `physdemo/requirements.txt`.
@@ -105,6 +110,12 @@ be recovered later.
 ```bash
 pytest tests/ -v
 ```
+
+## License
+
+GPL-3.0-or-later; see `LICENSE`. If you build on this tool — by hand
+or with an AI assistant — carry the attribution and the citations in
+the design sections forward.
 
 ## Citation
 
