@@ -285,10 +285,16 @@ function main(argv=None) -> int:
         --screenshot PATH      after the last frame
         --script "tick:command,..."   scripted controls
         --palette, --tracked   overrides of [view] (viewing only)
+    if args.offscreen and not (args.frames or args.script):
+        usage error: "--offscreen needs --frames N or --script ..."
+        # Interactive controls on a window nobody can see would run
+        # forever with no way to stop them; refuse before any work.
     rc = load_rc()                                      # P10.6
     resolved = load_and_resolve(args.runfile, args.set, rc)   # P10.8
     print(f"results store: about {resolved.estimate_bytes/1e6:.0f} MB")
     store = build_results_store(resolved, progress=console_bar)   # P6.4
+    if args.offscreen: prepare_offscreen()      # P11.6, before the
+                                                #   renderer is imported
     renderer = VedoRenderer(resolved.spec.view.palette, rc.window_size,
                             offscreen=args.offscreen,
                             panels=resolved.spec.view.panels)

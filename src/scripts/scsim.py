@@ -68,7 +68,13 @@ def parse_command_line(command_line_args=None):
                         help='override [view].palette')
     parser.add_argument('--tracked', type=int, default=None,
                         help='override [view].tracked_particle')
-    return parser.parse_args(command_line_args)
+    args = parser.parse_args(command_line_args)
+    if args.offscreen and not (args.frames or args.script):
+        # Interactive controls on a window nobody can see would run
+        # forever with no way to stop them; refuse before any work.
+        parser.error('--offscreen needs --frames N or --script "..." '
+                     'so that the run knows when to stop')
+    return args
 
 
 def console_progress(total):
@@ -105,6 +111,11 @@ def main(command_line_args=None):
 
     # Imported here so that `--help` and a run-file error never pay for VTK's
     # import, which is slow on a shared filesystem.
+    from scattering.render.offscreen import prepare_offscreen
+    if args.offscreen:
+        # Before the renderer (and so VTK) is imported; this also
+        # covers a DISPLAY that is set but dead (pseudocode 11.6).
+        prepare_offscreen()
     from scattering.render.vedo_renderer import VedoRenderer
     from scattering.ui import ScriptedControls, VedoControls, run_session
     from scattering.ui.vedo_controls import parse_script

@@ -322,11 +322,47 @@ function actor_for(drawable, palette) -> vedo actor:
     apply color, opacity, weight
 ```
 
-**Offscreen and the pixel check.** `offscreen=True` needs no X
-server. A VTK window without a valid OpenGL context accepts
-`Render()` and draws nothing (the rigid-body spike's trap), so the
-render test reads the screenshot back as an array and asserts it is
-not uniform.
+**Offscreen and the pixel check.** A VTK window without a valid
+OpenGL context accepts `Render()` and draws nothing (the rigid-body
+spike's trap), so the render test reads the screenshot back as an
+array and asserts it is not uniform.
+
+**Choosing VTK's window class (`render/offscreen.py`).** VTK picks
+its window class when it is first imported, from the environment
+variable `VTK_DEFAULT_OPENGL_WINDOW`. The rule, which is the
+`physdemo` suite's rule and is portable by construction:
+
+```
+function prepare_offscreen() -> bool:
+    # Call BEFORE anything imports vtk or vedo. Linux only: on
+    # macOS and Windows the default window class draws offscreen
+    # with no help, and EGL does not exist there.
+    if not sys.platform.startswith("linux"): return False
+    if "vtkmodules" in sys.modules or "vtk" in sys.modules:
+        warn "VTK is already imported; the window class is fixed"
+        return False
+    os.environ.setdefault("VTK_DEFAULT_OPENGL_WINDOW",
+                          "vtkEGLRenderWindow")
+    return True
+```
+
+- **Offscreen requested ⇒ EGL, whatever `DISPLAY` says.** A
+  `DISPLAY` that is set but dead (a stale SSH forwarding) is common
+  on clusters, and VTK's X window class hangs on it. So the decision
+  keys on what was ASKED FOR, not on `DISPLAY`: `scsim --offscreen`,
+  the test suite (`tests/conftest.py`), and the spikes call
+  `prepare_offscreen()` before importing the renderer.
+- **On screen ⇒ leave VTK alone.** The default X (or Cocoa, or
+  Win32) window class is the right one when a window is wanted.
+- **Import-time fallback in `vedo_renderer.py`:** on Linux with
+  neither `DISPLAY` nor `WAYLAND_DISPLAY` set, no window can open at
+  all, so the renderer calls `prepare_offscreen()` itself. An
+  explicit `VTK_DEFAULT_OPENGL_WINDOW` in the environment always
+  wins (`setdefault`).
+
+The earlier rule — EGL whenever `DISPLAY` is unset, on any platform —
+was wrong twice: macOS never sets `DISPLAY`, and a stale `DISPLAY`
+defeated it on the cluster.
 
 ---
 

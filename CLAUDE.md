@@ -364,8 +364,11 @@ source $CPG_VENV_RIGID
 pytest tests/ -v
 ```
 
-The render tests need an offscreen OpenGL context. With `DISPLAY`
-unset the renderer asks VTK for its EGL window class, which works on
-the cluster's nodes; where no context exists the tests skip. VTK's
-import is slow on the shared filesystem, so expect the first render
-test to take a minute.
+The render tests need an offscreen OpenGL context. On Linux the suite
+(`tests/conftest.py`) and `scsim --offscreen` ask VTK for its EGL
+window class before VTK is imported, whatever `DISPLAY` says, because
+a `DISPLAY` that is set but dead would otherwise hang them; macOS and
+Windows need no help and are left alone. The rule lives in
+`src/scattering/render/offscreen.py` (pseudocode 11.6). Where no
+context exists the tests skip. VTK's import is slow on the shared
+filesystem, so expect the first render test to take a minute.

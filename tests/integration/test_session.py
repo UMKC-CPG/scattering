@@ -110,3 +110,14 @@ def test_scsim_main_offscreen(tmp_path, monkeypatch):
     assert status == 0
     assert shot.exists() and shot.stat().st_size > 1000
     assert not (tmp_path / 'command').exists()
+
+
+def test_scsim_refuses_offscreen_without_an_end(monkeypatch, capsys):
+    """P12.7: interactive controls on an invisible window would never
+    stop, so the entry point refuses before doing any work."""
+    monkeypatch.syspath_prepend(str(REPO / 'src' / 'scripts'))
+    import scsim
+    with pytest.raises(SystemExit) as refusal:
+        scsim.main([str(REPO / 'runs' / 'rutherford.toml'), '--offscreen'])
+    assert refusal.value.code == 2
+    assert '--frames' in capsys.readouterr().err

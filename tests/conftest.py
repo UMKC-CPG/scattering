@@ -18,6 +18,13 @@ _source_root = os.path.abspath(
 if _source_root not in sys.path:
     sys.path.insert(0, _source_root)
 
+# The suite always draws offscreen. Choose VTK's window class now,
+# before any test imports the renderer, so that a DISPLAY that is set
+# but dead cannot hang a render test (pseudocode 11.6).
+from scattering.render.offscreen import prepare_offscreen  # noqa: E402
+
+prepare_offscreen()
+
 
 @pytest.fixture
 def source_root():

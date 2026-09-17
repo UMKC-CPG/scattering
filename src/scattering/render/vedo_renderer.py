@@ -3,19 +3,26 @@
 (ARCHITECTURE 6.5); a different backend would be a new module here and nothing
 above it would change.
 
-Offscreen rendering: VTK's X-based window still wants a display, and
-a window without a valid OpenGL context accepts Render() and draws nothing --
-the rigid-body spike's trap. When no DISPLAY is set this module asks VTK for its
-EGL window class before vedo is imported, which gives a real offscreen context
-on the cluster's nodes; tests read the framebuffer back and skip if it is empty.
+Offscreen rendering: VTK fixes its window class when it is imported,
+and a window without a valid OpenGL context accepts Render() and
+draws nothing -- the rigid-body spike's trap. `render/offscreen.py`
+holds the portable rule for choosing the class (EGL on Linux when
+offscreen drawing is asked for; nothing on macOS or Windows); tests
+read the framebuffer back and skip if it is empty.
 
 Attribution: this module is part of the scattering teaching tool.
 """
 
-import os
+from scattering.render.offscreen import (no_display_available,
+                                         prepare_offscreen)
 
-if not os.environ.get('DISPLAY'):
-    os.environ.setdefault('VTK_DEFAULT_OPENGL_WINDOW', 'vtkEGLRenderWindow')
+# The import-time fallback of pseudocode 11.6: on Linux with no display
+# named at all, no window could open, so draw offscreen. Callers that
+# WANT offscreen drawing call prepare_offscreen() themselves before
+# importing this module, which also covers a DISPLAY that is set but
+# dead.
+if no_display_available():
+    prepare_offscreen()
 
 import numpy as np                                # noqa: E402
 import vedo                                       # noqa: E402

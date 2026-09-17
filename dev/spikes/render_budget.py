@@ -37,6 +37,8 @@ from scattering.render.scene_description import (Scene,
 
 
 def measure(n_particles, frames, size, panels):
+    from scattering.render.offscreen import prepare_offscreen
+    prepare_offscreen()
     from scattering.render.vedo_renderer import VedoRenderer
     spec = RunSpec(
         potential=PotentialSpec(preset='alpha_on_gold'),
