@@ -19,4 +19,8 @@ The module map that governs this layout is `dev/ARCHITECTURE.md` section 2.
 Adding a subpackage means adding its row there.
 """
 
-__version__ = '0.1.0'
+# The ONE place the version is stated. pyproject.toml reads it from
+# here (dynamic = ["version"]); pip compares this number, not the code,
+# when deciding whether to update an installed copy. Bump it at every
+# release, with a matching tag (CLAUDE.md, "Versions and Releases").
+__version__ = '0.9.0'

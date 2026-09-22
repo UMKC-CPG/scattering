@@ -22,7 +22,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scattering"
-version = "0.1.0"
+# The version is read from scattering/__init__.py (__version__), the one
+# place it is stated; see [tool.setuptools.dynamic] below.
+dynamic = ["version"]
 description = "Teaching tool for classical scattering and its inversion"
 requires-python = ">=3.10"
 license = {text = "GPL-3.0-or-later"}
@@ -53,6 +55,9 @@ Repository = "https://github.com/UMKC-CPG/scattering"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "scattering.__version__"}
 
 # The example run files are data inside the package, so that they are
 # installed with it and `scsim --examples` can find them anywhere.
