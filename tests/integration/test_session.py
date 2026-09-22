@@ -228,3 +228,26 @@ def test_graticule_line_count(run):
     renderer.set_graticule(8)
     assert len(renderer._actors_for(sphere)) == 7 + 16
     renderer.close()
+
+
+def test_rebuilding_the_static_scene_removes_the_old_actors(run):
+    """A graticule or palette change must replace the static actors,
+    not stack a second copy under them (the bug seen on screen as the
+    orbit plane turning opaque with every Ctrl+[)."""
+    resolved, store = run
+    renderer = _renderer(panels=())
+    rc = RcSettings()
+    run_session(resolved, store, ScriptedControls([(1, 'quit')], 3),
+                renderer, rc)
+    view = renderer.plotter.at(0)
+    before = len(view.get_actors())
+    state = run_session(resolved, store, ScriptedControls(
+        [(1, 'graticule_more'), (2, 'palette'), (3, 'quit')], 6),
+        renderer, rc)
+    # Two more latitude lines and four more meridians, nothing stacked.
+    assert len(view.get_actors()) == before + 2 + 4
+    run_session(resolved, store, ScriptedControls(
+        [(1, 'graticule_fewer'), (2, 'quit')], 5), renderer, rc,
+        state=state)
+    assert len(view.get_actors()) == before
+    renderer.close()

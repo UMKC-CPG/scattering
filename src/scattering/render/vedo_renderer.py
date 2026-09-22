@@ -75,16 +75,22 @@ class VedoRenderer:
     def set_palette(self, palette_name):
         self.palette_name = palette_name
         self.plotter.background(BACKGROUNDS[palette_name])
-        self.static_actors.clear()
-        self.static_key = None
+        self._invalidate_static()
 
     def set_graticule(self, n_lines):
         """Rebuild the detector sphere with `n_lines` lines of latitude
         (design 11.12) at the next frame."""
         if n_lines != self.graticule_lines:
             self.graticule_lines = int(n_lines)
-            self.static_actors.clear()
-            self.static_key = None
+            self._invalidate_static()
+
+    def _invalidate_static(self):
+        """Make the next render rebuild the static actors. The OLD
+        actors stay listed here until render() removes them from the
+        view: clearing the list first (as this once did) left every old
+        copy on screen, so each rebuild stacked another translucent
+        orbit plane, cap, and graticule on top of the last."""
+        self.static_key = None
 
     def render(self, scene, camera, static_key, resolved=None, state=None,
                ring_lines=()):
