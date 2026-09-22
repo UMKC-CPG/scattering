@@ -89,7 +89,11 @@ scsim --check
 
 `pip` fetches the numerical and graphics libraries (about 1 GB) and
 creates the `scsim` command. No `git`, compiler, or GPU is needed.
-In later sessions only the `activate` line is repeated.
+In later sessions only the `activate` line is repeated. To update
+later, `pip install --upgrade` with the same URL picks up a new
+release; between releases the version number does not change and
+`pip` will do nothing, so use
+`pip install --force-reinstall --no-deps <the same URL>`.
 
 **On a shared computer (a teaching cluster).** The tool is one member
 of the [`physdemo`](https://github.com/UMKC-CPG/physdemo) suite, which

@@ -47,7 +47,11 @@ numbering so older cross-references still resolve.
       wheel, the `Scripts\activate` line, and path handling.
 - [ ] (A9.1) Cut a release tag once Route B is confirmed, and point
       the README's `pip install` URL at `refs/tags/<tag>` so that a
-      class installs a fixed version rather than `main`.
+      class installs a fixed version rather than `main`. Every
+      release bumps `version` in `pyproject.toml`: pip decides whether
+      to update by comparing versions, not code, so an unchanged
+      number means `pip install --upgrade` does nothing (physdemo
+      README, "Updating a tool").
 - [ ] (A9.3, examples) `rutherford_disc` as shipped (20 000
       particles) takes over ten minutes to reach its first frame. Find
       where the time goes (store build, or 20 000 glyphs and traces),
