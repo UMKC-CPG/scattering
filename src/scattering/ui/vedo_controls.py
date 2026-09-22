@@ -11,6 +11,8 @@ add_callback and an interactor), so that it imports no graphics library itself.
 Attribution: this module is part of the scattering teaching tool.
 """
 
+import sys
+
 from scattering.ui.controls import BINDINGS
 
 
@@ -30,6 +32,14 @@ class VedoControls:
         key = getattr(event, 'keypress', None)
         if key in BINDINGS:
             self.queue.append(BINDINGS[key][0])
+        elif key and key.startswith(('Ctrl+', 'Alt+')):
+            # A chord the table does not know: say so, with the name as
+            # it arrived. Key names differ between X servers, remote
+            # desktops, and keyboard layouts ("Ctrl+bracketleft" is what
+            # vedo documents for Ctrl+[), and this line is how a
+            # mismatch is found (pseudocode 12.5).
+            print(f'scsim: key {key!r} is not bound (Ctrl+h: legend)',
+                  file=sys.stderr)
 
     def push(self, command):
         """A command with a value from a slider (pseudocode 12.5):

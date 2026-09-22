@@ -273,6 +273,14 @@ class VedoControls(ControlsSource):
     _on_key_press(event):
         key = event.keypress            # arrives as "Ctrl+s" etc.
         if key in BINDINGS: self.queue.append(BINDINGS[key][0])
+        elif key starts with "Ctrl+" or "Alt+":
+            # A chord the table does not know: say so, with the name
+            # as it arrived, on standard error. Key names differ between
+            # X servers, remote desktops, and keyboard layouts, and this
+            # line is how a mismatch is found ("Ctrl+bracketleft" is
+            # what vedo documents for Ctrl+[; a display that sends
+            # something else shows it here).
+            print(f"scsim: key {key!r} is not bound (Ctrl+h: legend)")
         # Unchorded keys other than q / Escape are VTK's own and are
         # ignored here (D12.15).
     push(command):                      # from the renderer's sliders

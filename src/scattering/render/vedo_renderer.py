@@ -265,12 +265,19 @@ class VedoRenderer:
         elif isinstance(geometry, SphereBand):
             actors.append(_sphere_band_mesh(geometry).c(color).alpha(
                 max(encoding.opacity * 0.6, 0.3)))
-        elif isinstance(geometry, Sphere):
-            # A graticule, not a surface (design 11.12): n lines of
-            # latitude (constant scattering angle) and 2n of longitude.
+        elif isinstance(geometry, Sphere) and drawable.role == 'detector':
+            # The detector sphere is a graticule, not a surface (design
+            # 11.12): n lines of latitude (constant scattering angle)
+            # and 2n of longitude.
             for points in _graticule(geometry, self.graticule_lines):
                 actors.append(vedo.Line(points, lw=1).c(color).alpha(
                     max(encoding.opacity, 0.5)))
+        elif isinstance(geometry, Sphere):
+            # Any other sphere (the probe-depth sphere of design 11.4)
+            # is a translucent surface.
+            actor = vedo.Sphere(pos=geometry.center, r=geometry.radius,
+                                res=24).c(color).alpha(encoding.opacity)
+            actors.append(actor)
         elif isinstance(geometry, Plane):
             side = 2.0 * geometry.half_extent
             actor = vedo.Plane(pos=geometry.center, normal=geometry.normal,
@@ -287,11 +294,14 @@ class VedoRenderer:
         elif isinstance(geometry, Text):
             actors.append(vedo.Text3D(geometry.text, pos=geometry.anchor,
                                       s=0.03).c(color))
-        if drawable.label and drawable.static and actors and \
-                isinstance(geometry, (Ring, Sphere)):
-            anchor = _label_anchor(geometry)
-            actors.append(vedo.Text3D(drawable.label, pos=anchor,
-                                      s=0.025 * _extent(geometry)).c(color))
+        if drawable.label and actors:
+            # Every labeled quantity carries its label on screen (design
+            # 11.2, pseudocode 11.6): rings and spheres at their rim, the
+            # tracked particle's markers beside the mark itself.
+            anchor, size = _label_placement(geometry)
+            if anchor is not None:
+                actors.append(vedo.Text3D(drawable.label, pos=anchor,
+                                          s=size).c(color))
         return actors
 
 
@@ -356,11 +366,28 @@ def _arc_points(arc, count=48):
     return np.array(points)
 
 
-def _label_anchor(geometry):
+def _label_placement(geometry):
+    """Where a drawable's label sits and how big it is, per geometry:
+    (anchor, text size) or (None, None) for a geometry with no natural
+    place for text."""
     if isinstance(geometry, Ring):
-        return geometry.center + np.array([geometry.outer, 0.0, 0.0])
-    return geometry.center + np.array([0.0, 0.0, geometry.radius])
-
-
-def _extent(geometry):
-    return geometry.outer if isinstance(geometry, Ring) else geometry.radius
+        return (geometry.center + np.array([geometry.outer, 0.0, 0.0]),
+                0.025 * geometry.outer)
+    if isinstance(geometry, Sphere):
+        return (geometry.center + np.array([0.0, 0.0, geometry.radius]),
+                0.025 * geometry.radius)
+    if isinstance(geometry, Arc):
+        # Just outside the arc's midpoint.
+        points = _arc_points(geometry, count=3)
+        outward = points[1] - geometry.center
+        return (geometry.center + 1.15 * outward, 0.12 * geometry.radius)
+    if isinstance(geometry, Segment):
+        length = float(np.linalg.norm(geometry.end - geometry.start))
+        return (0.5 * (geometry.start + geometry.end), 0.03 * length)
+    if isinstance(geometry, Arrow):
+        tip = geometry.start + geometry.direction * geometry.display_length
+        return (tip, 0.12 * geometry.display_length)
+    if isinstance(geometry, Points) and len(geometry.positions) == 1:
+        return (geometry.positions[0] + 1.5 * geometry.radius,
+                0.8 * geometry.radius)
+    return (None, None)
