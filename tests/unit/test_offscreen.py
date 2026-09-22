@@ -1,4 +1,5 @@
-"""Verifies the window-class rule of pseudocode 11.6, without VTK."""
+"""Verifies the window-class rule of physdemo PSEUDOCODE 4 (an
+inherited module), without VTK."""
 
 import sys
 

@@ -25,7 +25,8 @@ scattering/
   runs                Symbolic link to src/scattering/examples/
   src/
     scattering/       The importable library (Section 3), including
-      cli/            the entry points' bodies (Section 4.13),
+      cli/            the entry points' bodies and the inherited
+                      support module (Section 4.13),
       defaults/       the shipped rc file (Section 7), and
       examples/       the example run files (TOML)
     scripts/          Thin executable fronts for cli/ (Section 4.13)
@@ -354,9 +355,12 @@ library, and what differs is only the few lines that start it.
 | Module | Purpose |
 | --- | --- |
 | `cli/scsim.py` | Body of the interactive tool (Tier 1): argument |
-| | parsing, `main(argv)`, `record_command()`, `console_main()` |
-| `cli/examples.py` | Finds and copies the packaged example run |
-| | files and the shipped rc file |
+| | parsing, `main(argv)`, `run_offscreen()`, `console_main()`; owns |
+| | `COMMAND_NAME` and `CHECKED_DISTRIBUTIONS` |
+| `cli/support.py` | INHERITED from the physdemo skeleton: the rc |
+| | lookup, the command log, the packaged examples, the rc copy, |
+| | the self-check driver. Holds no command name; the command |
+| | module passes its name in. |
 | `cli/scbatch.py` | Body of the batch tool (Tier 2, later) |
 
 | Front | How it is reached |
@@ -377,6 +381,13 @@ The shipped rc file moves with the code it configures: it is
 `defaults/scsimrc.py` inside the package (Section 7), not a file
 beside the script, because an installed copy has no `scripts/`
 directory to look in.
+
+**Inherited files.** The front, `cli/support.py`,
+`render/offscreen.py`, the `defaults/` and `examples/` package
+docstrings, `tests/conftest.py`, the installed-copy and offscreen
+tests, and the slash commands are the physdemo suite's skeleton files
+with this tool's name substituted (`PSEUDOCODE.md` row 0). They are
+changed in the suite first and refreshed here, never edited here.
 
 ---
 

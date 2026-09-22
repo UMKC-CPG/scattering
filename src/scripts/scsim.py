@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-"""scsim -- the executable front of the interactive scattering tool.
+"""scsim -- the executable front of the interactive Scattering tool.
 
 This file is deliberately almost empty. The command's body is
-`scattering.cli.scsim` (pseudocode 12.7), because the tool is reached in
-two ways that must run the same code (ARCHITECTURE 4.13, 9.1):
+`scattering.cli.scsim`, because the tool is reached in two ways that
+must run the same code (physdemo contract C5):
 
 - through THIS script, which the `physdemo` suite links into its
   commands and which a clone runs directly, with nothing installed;
-- through the `scsim` console script that `pip install` creates, which
-  calls `scattering.cli.scsim.console_main`.
+- through the `scsim` console script that `pip install` creates,
+  which calls `scattering.cli.scsim.console_main`.
 
-Three things here are load-bearing, and the suite depends on them: the
-`#!/usr/bin/env python3` first line and the executable bit, so the
-script runs by name with whatever Python the active environment
-provides; and the RESOLVED path below, because the script is normally
-run through a symbolic link, and the unresolved path would name the
-link rather than this file.
+Three things here are load-bearing, and the suite depends on them
+(contract C2): the `#!/usr/bin/env python3` first line and the
+executable bit, so the script runs by name with whatever Python the
+active environment provides; and the RESOLVED path below, because
+the script is normally run through a symbolic link, and the
+unresolved path would name the link rather than this file.
 
 Run `scsim --help` for the usage.
 """

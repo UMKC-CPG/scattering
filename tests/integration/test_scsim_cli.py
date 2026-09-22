@@ -1,4 +1,5 @@
-"""Verifies pseudocode 12.10 and the entry point of 12.7: the packaged
+"""Verifies pseudocode 12.10 (the inherited `cli/support.py`) and
+the entry point of 12.7: the packaged
 examples, the rc copy, the self-check, and errors that are messages.
 Everything here must hold in a clone, in a linked suite, and in an
 installed copy, so nothing here looks for a file except through the
@@ -10,16 +11,16 @@ from pathlib import Path
 
 import pytest
 
-from scattering.cli import examples
+from scattering.cli import support
 from scattering.cli import scsim as cli
 from scattering.run import load_and_resolve, load_rc
-from scattering.run.rc import PACKAGE_DEFAULTS_DIR
+from scattering.run.rc import PACKAGE_DEFAULTS_DIR, RC_FILENAME
 
 REPO = Path(__file__).resolve().parents[2]
 
 
 def test_packaged_examples_resolve_and_match_runs():
-    packaged = examples.example_files()
+    packaged = support.example_files()
     assert 'rutherford' in packaged
     for path in packaged.values():
         load_and_resolve(path)                   # raises if one is broken
@@ -30,31 +31,31 @@ def test_packaged_examples_resolve_and_match_runs():
 
 def test_locate_run_file(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
-    packaged = examples.example_files()['rutherford']
-    assert examples.locate_run_file(str(packaged)) == packaged
-    assert examples.locate_run_file('rutherford') == packaged
-    assert examples.locate_run_file('rutherford.toml') == packaged
+    packaged = support.example_files()['rutherford']
+    assert support.locate_run_file(str(packaged), 'scsim') == packaged
+    assert support.locate_run_file('rutherford', 'scsim') == packaged
+    assert support.locate_run_file('rutherford.toml', 'scsim') == packaged
     assert 'using the packaged example' in capsys.readouterr().err
     # A real file in the working directory always wins.
     (tmp_path / 'rutherford.toml').write_text('schema = 1\n')
-    assert examples.locate_run_file('rutherford.toml') == \
+    assert support.locate_run_file('rutherford.toml', 'scsim') == \
         Path('rutherford.toml')
     # A directory part, or an unknown name, is never rescued.
     for wrong in ('sub/rutherford', 'no_such_example'):
         with pytest.raises(FileNotFoundError, match='rutherford_disc'):
-            examples.locate_run_file(wrong)
+            support.locate_run_file(wrong, 'scsim')
 
 
 def test_copy_examples_never_overwrites(tmp_path, capsys):
     target = tmp_path / 'my runs'
-    assert examples.copy_examples(target) == 0
+    assert support.copy_examples(target, 'scsim') == 0
     written = sorted(p.name for p in target.iterdir())
     assert written == sorted(p.name
-                             for p in examples.example_files().values())
+                             for p in support.example_files().values())
     edited = target / 'rutherford.toml'
     edited.write_text('# my edit\n')
     capsys.readouterr()
-    assert examples.copy_examples(target) == 0
+    assert support.copy_examples(target, 'scsim') == 0
     assert edited.read_text() == '# my edit\n'
     assert capsys.readouterr().out.count('kept') == len(written)
 
@@ -66,14 +67,14 @@ def test_copy_into_a_read_only_directory_is_a_message(tmp_path, capsys):
     if os.access(locked, os.W_OK):
         pytest.skip('this user can write a read-only directory')
     try:
-        assert examples.copy_examples(locked) == 1
+        assert support.copy_examples(locked, 'scsim') == 1
     finally:
         locked.chmod(0o755)
     assert 'Choose a directory you can write' in capsys.readouterr().err
 
 
 def test_written_rc_file_loads_and_equals_the_defaults(tmp_path):
-    assert examples.copy_rc_file(tmp_path) == 0
+    assert support.copy_rc_file(RC_FILENAME, tmp_path, 'scsim') == 0
     assert load_rc([tmp_path]) == load_rc([PACKAGE_DEFAULTS_DIR])
 
 

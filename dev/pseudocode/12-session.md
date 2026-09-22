@@ -382,6 +382,34 @@ Follows the template's `XYZ.py` / `XYZrc.py` idiom (`CLAUDE.md`,
 body lives in the package, because the command is reached in two
 ways and both must run the same code.
 
+**Revised 2026-09-22: the shared part is inherited.** The helpers
+this module calls (`locate_run_file`, `copy_examples`,
+`copy_rc_file`, `record_command`, `self_check`) now live in
+`cli/support.py`, which is the physdemo skeleton's module with this
+tool's name substituted (index row 0); `cli/examples.py`, this
+tool's earlier hand-written version of it, is gone. The inherited
+module holds no command name and no dependency list, so this module
+supplies them: `COMMAND_NAME` and `CHECKED_DISTRIBUTIONS` are
+defined here and passed in, and the part of the self-check that
+knows how to run this tool (`run_offscreen`) is defined here and
+handed to `support.self_check`. The seam inventory for that move:
+
+| Before (`cli/examples.py`, `cli/scsim.py`) | After | Note |
+| --- | --- | --- |
+| `CHECKED_DISTRIBUTIONS` in `examples.py` | `cli/scsim.py` | per tool |
+| `locate_run_file(argument)` | `support.locate_run_file(` | required |
+| | `argument, COMMAND_NAME)` | argument |
+| `copy_examples(directory)` | `support.copy_examples(` | |
+| | `directory, COMMAND_NAME)` | |
+| `copy_rc_file(directory)` with the rc | `support.copy_rc_file(` | name from |
+| name inside | `RC_FILENAME, ".", COMMAND_NAME)` | `run.rc` |
+| `self_check()` building and drawing | `support.self_check(` | the run |
+| the run itself | `run_offscreen, COMMAND_NAME,` | moves to |
+| | `CHECKED_DISTRIBUTIONS)` | 12.7 |
+| `installed_versions()` | takes the tuple | |
+| `PACKAGE_DEFAULTS_DIR` in `examples.py` | `support.py` and `run/rc.py` | both keep |
+| | | one; `run/` may not import `cli/` |
+
 **Seam inventory for the move.** What `src/scripts/scsim.py` holds
 today, and where each part goes:
 
@@ -406,12 +434,26 @@ re-exports `main` and `record_command`.
 
 ```
 # ---- cli/scsim.py ----
-UTILITY_FLAGS = ("-h", "--help", "--examples", "--write-rc", "--check")
+from scattering.cli.support import (copy_examples, copy_rc_file,
+    locate_run_file, record_command, self_check)         # row 0
+COMMAND_NAME = "scsim"
+CHECKED_DISTRIBUTIONS = ("numpy", "scipy", "matplotlib", "vedo", "vtk",
+                         "pint", "tomli_w")   # == pyproject deps minus
+                                              #   the 3.10 backport
 
-function record_command():
-    if any flag of UTILITY_FLAGS in sys.argv: return     # not runs (D12.13)
-    try: append the dated argv block to ./command
-    except OSError: one line on stderr; continue          # see below
+function run_offscreen(run_file_path, frames) -> image:   # for self_check
+    rc = load_rc()                                                # P10.6
+    resolved = load_and_resolve(run_file_path,
+        ["fidelity.n_samples=40", "fidelity.n_deflection_points=60"],
+        rc)                                    # the real path, small
+    store = build_results_store(resolved)
+    print f"built       {K} energies x {N} particles in {t:.1f} s"
+    # prepare_offscreen() was called by self_check before this
+    renderer = VedoRenderer(palette, (640, 480), offscreen=True)
+    run_session(resolved, store, ScriptedControls([], frames), renderer,
+                rc)
+    image = renderer.screenshot(as_array=True); renderer.close()
+    return image
 
 function parse(argv):
         runfile                optional positional
@@ -434,11 +476,14 @@ function parse(argv):
 
 function main(argv=None) -> int:
     args = parse(argv)
-    if args.examples is given: return copy_examples(args.examples)   # 12.10
-    if args.write_rc:          return copy_rc_file(cwd)              # 12.10
-    if args.check:             return self_check()                   # 12.10
+    if args.examples is given:
+        return copy_examples(args.examples, COMMAND_NAME)            # 12.10
+    if args.write_rc: return copy_rc_file(RC_FILENAME, ".", COMMAND_NAME)
+    if args.check:
+        return self_check(run_offscreen, COMMAND_NAME,
+                          CHECKED_DISTRIBUTIONS)                     # 12.10
     try:
-        runfile  = locate_run_file(args.runfile)                     # 12.10
+        runfile  = locate_run_file(args.runfile, COMMAND_NAME)       # 12.10
         rc       = load_rc()                                         # P10.6
         resolved = load_and_resolve(runfile, overrides, rc)          # P10.8
     except RunFileError, FileNotFoundError as problem:
@@ -545,19 +590,35 @@ the store is a field of `Session` and not a global.
 
 ---
 
-## 12.10 Examples, the rc copy, and the self-check (`cli/examples.py`)
+## 12.10 Examples, the rc copy, and the self-check (`cli/support.py`)
 
 Specifies D12.13. Everything here finds its files THROUGH THE PACKAGE
 and never relative to a script or the working directory; that is the
 whole of what makes a clone, a linked suite, and an installed copy
 behave alike.
 
+**Revised 2026-09-22.** The module is `cli/support.py` and is
+INHERITED from the physdemo skeleton (index row 0), whose
+`dev/PSEUDOCODE.md` section 4.5 is now the reference text for it;
+what follows is kept as this tool's record of the functions and of
+the tests that verify them here. Three things changed when the
+hand-written `cli/examples.py` was replaced by the inherited module:
+every function that names the command in a message takes
+`command_name` as a required argument; `locate_run_file` also takes
+`noun` (this tool uses the default, "run file"); and `self_check`
+takes `(run_offscreen, command_name, checked_distributions)`, with the
+run itself in `cli/scsim.run_offscreen` (12.7), so that the module
+never imports the module that imports it and holds no dependency
+list. `load_rc_defaults` and `rc_search_path` in the inherited module
+are unused by this tool, whose rc file is P10.6's `run/rc.py`; they
+stay because the file must be the skeleton's byte for byte.
+
 ```
 function example_files() -> dict name -> path:
     # importlib.resources.files("scattering.examples"), every *.toml,
     # keyed by stem; sorted by name.
 
-function locate_run_file(argument) -> path:
+function locate_run_file(argument, command_name, noun="run file") -> path:
     if exists(argument): return argument              # a real file wins
     if argument has no directory part:
         stem = argument without a trailing ".toml"
@@ -565,11 +626,12 @@ function locate_run_file(argument) -> path:
             note on stderr: "using the packaged example <path>"
             return example_files()[stem]
     raise FileNotFoundError(
-        "<argument>: no such run file. Packaged examples: <names>. "
-        "Run one by name (scsim <name>), or copy them here with "
-        "scsim --examples.")
+        "<argument>: no such <noun>. Packaged examples: <names>. "
+        "Run one by name (<command_name> <name>), or copy them here "
+        "with <command_name> --examples.")
 
-function copy_without_overwriting(sources, directory) -> int:
+function copy_without_overwriting(sources, directory, command_name)
+        -> int:
     # Shared by the two copiers. Returns an exit status.
     try: create directory if missing
     for source in sources:
@@ -581,30 +643,24 @@ function copy_without_overwriting(sources, directory) -> int:
         ~/scattering-runs"; return 1
     return 0
 
-function copy_examples(directory) -> int:
-    return copy_without_overwriting(example_files().values(), directory)
+function copy_examples(directory, command_name) -> int:
+    return copy_without_overwriting(example_files().values(), directory,
+                                    command_name)
 
-function copy_rc_file(directory) -> int:
-    return copy_without_overwriting([PACKAGE_DEFAULTS_DIR/"scsimrc.py"],
-                                    directory)                 # P10.6
+function copy_rc_file(rc_filename, directory, command_name) -> int:
+    return copy_without_overwriting([PACKAGE_DEFAULTS_DIR/rc_filename],
+                                    directory, command_name)   # P10.6
 
-function self_check() -> int:                      # writes no file
-    print python version, platform, and for each declared dependency
+function self_check(run_offscreen, command_name, checked_distributions)
+        -> int:                                    # writes no file
+    print python version, platform, and for each checked distribution
         its installed version or "MISSING"
     if any MISSING: print RESULT: FAIL -- <which>; return 1
     try:
-        t0 = now
-        rc = load_rc()
-        resolved = load_and_resolve(example_files()["rutherford"],
-            ["fidelity.n_samples=40", "fidelity.n_deflection_points=60"],
-            rc)                                    # the real path, small
-        store = build_results_store(resolved)
-        print f"built {K} energies x {N} particles in {now - t0:.1f} s"
         prepare_offscreen()                        # P11.6
-        renderer = VedoRenderer(palette, (640, 480), offscreen=True,
-                                panels=())
-        run_session(resolved, store, ScriptedControls([], 2), renderer, rc)
-        image = renderer.screenshot(as_array=True); renderer.close()
+        t0 = now
+        image = run_offscreen(first example file, frames=2)   # 12.7
+        print f"drew        2 frames offscreen in {now - t0:.1f} s"
     except Exception as problem:
         print RESULT: FAIL -- <type>: <problem>; return 1
     if image is uniform:
@@ -640,13 +696,15 @@ student can send to the instructor.
 - `record_command` writes nothing when a utility flag is present.
 - `main(["--check"])` returns 0, prints `RESULT: PASS`, and leaves
   the working directory empty (skips where no GL context exists).
-- **The installed-copy guarantee (A8.6(5)).** `load_rc` succeeds with
-  the search restricted to the package; the object named by
-  `[project.scripts] scsim` imports and is callable; every top-level
-  third-party module imported anywhere under `src/scattering/` is
-  covered by `[project] dependencies` or an extra; and
+- **The installed-copy guarantee (A8.6(5)).** The inherited
+  `tests/unit/test_installed_copy.py` (row 0): the rc file loads with
+  the search restricted to the package; the version has one source;
+  the script names equal the `[project.scripts]` keys and each target
+  imports and is callable; every top-level third-party module imported
+  under `src/scattering/` is declared; the examples are package data;
   `src/scripts/scsim.py` imports nothing but the standard library and
-  `scattering.cli`.
+  `scattering.cli` and defines nothing; and `CHECKED_DISTRIBUTIONS` in
+  `cli/scsim.py` equals the declared dependencies minus the backport.
 - Manual, recorded in `dev/notes/`: build a wheel, install it in a
   fresh virtual environment outside the repository, and run
   `scsim --check`, `scsim --examples`, and `scsim rutherford` there.

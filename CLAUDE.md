@@ -344,13 +344,28 @@ dev/              Design document chain (see dev/README.md)
 runs              Symbolic link to src/scattering/examples/
 src/
   scattering/     The importable library, by chain stage, plus:
-    cli/          Bodies of the commands (scsim; scbatch later)
+    cli/          Bodies of the commands (scsim; scbatch later), and
+                  support.py, inherited from the physdemo skeleton
     defaults/     The shipped rc file, scsimrc.py
     examples/     Ready-to-run example run files (TOML)
   scripts/        Thin executable fronts for cli/
 tests/            pytest suite: unit/, integration/, regression/
 .scattering/      Machine-local rc overrides (never tracked)
 ```
+
+## Inherited From the Suite
+
+Some files are the suite's, not this tool's, and `dev/PSEUDOCODE.md`
+row 0 lists them: the front in `src/scripts/`, `cli/support.py`,
+`render/offscreen.py`, the `defaults/` and `examples/` packages'
+`__init__.py`, `tests/conftest.py`, the installed-copy and offscreen
+tests, and `.claude/commands/`. They are governed by the suite's
+`dev/PSEUDOCODE.md` section 4. A change to one of them is made in the
+suite's skeleton (`../physdemo/template/`) first and carried here
+with `physdemo-new-tool --refresh --package scattering --command
+scsim --title Scattering .`; do not edit this copy on its own.
+`physdemo-check-tool .` verifies the suite's contract; run both
+before a release.
 
 ## Language, Build, and Running
 
@@ -384,6 +399,7 @@ Rules that keep both routes working, and that are tested
   is only a front: shebang, executable bit, `src/` put on the path
   from `Path(__file__).resolve()` (it is normally run through a
   symbolic link), then a call into `cli/`. It defines no function.
+  The `[project.scripts]` key in `pyproject.toml` is the same name.
 - **A new third-party import is declared in `pyproject.toml`,** with
   a lower bound no tighter than the suite's `requirements.in`, and
   is added to the suite first.

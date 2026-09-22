@@ -17,7 +17,11 @@ the normal case.
 **Step 1: Check the indexes first**
 
 `dev/DESIGN.md` and `dev/PSEUDOCODE.md` are indexes over
-`dev/design/` and `dev/pseudocode/`. Before anything else, verify:
+`dev/design/` and `dev/pseudocode/`. (In a project where they are
+single files holding the numbered sections themselves, there is no
+index to check: skip this step, and treat each section's "Governs"
+line as the index's "Governs" column below.) Before anything else,
+verify:
 
 - Every file in each directory has a row in its index.
 - Every index row points at a file that exists.

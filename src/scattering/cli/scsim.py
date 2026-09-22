@@ -26,47 +26,64 @@ call can be recovered later.
 # the physdemo suite links and a clone runs directly; and the console
 # script that `pip install` creates from pyproject.toml, which calls
 # console_main() below. The docstring above is the --help text.
+#
+# The helpers it calls (the packaged examples, the rc copy, the command
+# log, the self-check driver) are `cli/support.py`, INHERITED from the
+# physdemo skeleton (dev/PSEUDOCODE.md row 0; pseudocode 12.10). That
+# module holds no command name and no dependency list, so this one
+# supplies them: COMMAND_NAME, CHECKED_DISTRIBUTIONS, and run_offscreen.
 
 import argparse
 import sys
-from datetime import datetime
+import time
 
-from scattering.cli.examples import (copy_examples, copy_rc_file,
-                                     locate_run_file, self_check)
+from scattering.cli.support import (copy_examples, copy_rc_file,
+                                    locate_run_file, record_command,
+                                    self_check)
 from scattering.run import (RunFileError, build_results_store,
                             load_and_resolve, load_rc)
+from scattering.run.rc import RC_FILENAME
 
-# Invocations that are not runs, and so are not logged to `command`
-# (design 12.13): asking for help, copying files, checking the machine.
-UTILITY_FLAGS = ('-h', '--help', '--examples', '--write-rc', '--check')
+COMMAND_NAME = 'scsim'
+
+# The packages `scsim --check` reports on: the ones this tool imports,
+# by the names `pip` knows them by. pyproject.toml declares the same
+# set (minus the Python 3.10 TOML backport), and a test keeps the two
+# in agreement. It lives here and not in support.py because it differs
+# per tool and the inherited module must not.
+CHECKED_DISTRIBUTIONS = ('numpy', 'scipy', 'matplotlib', 'vedo', 'vtk',
+                        'pint', 'tomli_w')
 
 
-def record_command():
-    """Append this invocation to `command` in the working directory,
-    as a dated block naming the full argument vector. Called from the `__main__`
-    block, not from main(), so that the test suite calling
-    main(argv) never writes stray files. `--help` is not logged."""
-    if any(argument in UTILITY_FLAGS for argument in sys.argv):
-        return
-    # The log is a convenience and must never stop a run. The usual
-    # way to fail here is a student standing inside a shared, read-only
-    # installation, among the example run files (pseudocode 12.7).
-    try:
-        with open('command', 'a') as command_log:
-            timestamp = datetime.now().strftime('%b. %d, %Y: %H:%M:%S')
-            command_log.write(f'Date: {timestamp}\n')
-            command_log.write('Cmnd:')
-            for argument in sys.argv:
-                command_log.write(f' {argument}')
-            command_log.write('\n\n')
-    except OSError as problem:
-        print(f'note: cannot write ./command here ({problem.strerror}); '
-              'continuing without the command log', file=sys.stderr)
+def run_offscreen(run_file_path, frames):
+    """Build a deliberately small run from `run_file_path` THROUGH THE
+    ORDINARY CODE PATH (loading, resolving, building), draw `frames`
+    frames offscreen, and return the last frame as an array. This is
+    what `--check` runs; `support.self_check` calls prepare_offscreen()
+    before it, so the renderer may be imported here."""
+    started = time.perf_counter()
+    rc = load_rc()
+    resolved = load_and_resolve(
+        run_file_path,
+        ['fidelity.n_samples=40', 'fidelity.n_deflection_points=60'], rc)
+    store = build_results_store(resolved)
+    print(f'built       {store.n_energies} energies x '
+          f'{store.n_particles} particles in '
+          f'{time.perf_counter() - started:.1f} s')
+    from scattering.render.vedo_renderer import VedoRenderer
+    from scattering.ui import ScriptedControls, run_session
+    renderer = VedoRenderer(resolved.spec.view.palette, (640, 480),
+                            offscreen=True)
+    run_session(resolved, store, ScriptedControls([], frames), renderer,
+                rc)
+    image = renderer.screenshot(as_array=True)
+    renderer.close()
+    return image
 
 
 def parse_command_line(command_line_args=None):
     parser = argparse.ArgumentParser(
-        prog='scsim',
+        prog=COMMAND_NAME,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
         epilog='Defaults are given in ./scsimrc.py or '
@@ -130,11 +147,12 @@ def main(command_line_args=None):
     drive this without touching sys.argv."""
     args = parse_command_line(command_line_args)
     if args.examples is not None:
-        return copy_examples(args.examples)
+        return copy_examples(args.examples, COMMAND_NAME)
     if args.write_rc:
-        return copy_rc_file('.')
+        return copy_rc_file(RC_FILENAME, '.', COMMAND_NAME)
     if args.check:
-        return self_check()
+        return self_check(run_offscreen, COMMAND_NAME,
+                          CHECKED_DISTRIBUTIONS)
 
     overrides = list(args.overrides)
     if args.palette:
@@ -144,11 +162,11 @@ def main(command_line_args=None):
     # A run file that is missing or wrong is the commonest mistake a
     # student makes; it earns a message and status 2, not a traceback.
     try:
-        runfile = locate_run_file(args.runfile)
+        runfile = locate_run_file(args.runfile, COMMAND_NAME)
         rc = load_rc()
         resolved = load_and_resolve(runfile, overrides, rc)
     except (RunFileError, FileNotFoundError) as problem:
-        print(f'scsim: {problem}', file=sys.stderr)
+        print(f'{COMMAND_NAME}: {problem}', file=sys.stderr)
         return 2
     print(f'results store: about {resolved.estimate_bytes / 1e6:.0f} MB',
           file=sys.stderr)

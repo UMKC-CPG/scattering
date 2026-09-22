@@ -66,10 +66,13 @@ Read only what the chosen work needs.
 - **ARCHITECTURE work:** read `dev/ARCHITECTURE.md`.
 - **DESIGN work:** read the index `dev/DESIGN.md`, then read only
   the `dev/design/NN-*.md` files the work touches. Never read the
-  whole `dev/design/` directory.
+  whole `dev/design/` directory. (In a project whose `dev/DESIGN.md`
+  is a single file rather than an index, read only the numbered
+  section the work touches, found by its heading.)
 - **PSEUDOCODE work:** read the index `dev/PSEUDOCODE.md`, then only
   the relevant `dev/pseudocode/NN-*.md` files, plus the design
-  section each one implements.
+  section each one implements. (Single-file layout: the section by
+  its heading, as above.)
 - **CODE work:** read the relevant files in `src/`, the pseudocode
   section that governs them (find it via the "Governs" column of the
   index), and its design section. If the index names no section for

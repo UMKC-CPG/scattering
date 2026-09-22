@@ -20,6 +20,18 @@ name the section from this table that governs it.
 Each entry: number, file, what it governs under `src/scattering/`,
 the design section it implements, status.
 
+0. **Inherited from the physdemo suite** (its `dev/PSEUDOCODE.md`
+   section 4; `github.com/UMKC-CPG/physdemo`): `src/scripts/scsim.py`,
+   `cli/support.py`, `render/offscreen.py`, `defaults/__init__.py`,
+   `examples/__init__.py`, `tests/conftest.py`,
+   `tests/unit/test_installed_copy.py`, `tests/unit/test_offscreen.py`,
+   and `.claude/commands/`. These are the suite's skeleton files with
+   this tool's name substituted; a change to one is made in the
+   skeleton first and carried here with `physdemo-new-tool --refresh
+   --package scattering --command scsim --title Scattering .`, and a
+   refresh that reports every file unchanged is the proof that
+   nothing has drifted. Sections 11.6 and 12.10 below record how this
+   tool came to hold them and the seams they attach at. *inherited*
 1. [`pseudocode/01-natural-units.md`](pseudocode/01-natural-units.md)
    — governs `core/natural_units.py`, `core/units.py`,
    `core/presets.py`. Design 1. *implemented*
@@ -55,13 +67,15 @@ the design section it implements, status.
 11. [`pseudocode/11-scene.md`](pseudocode/11-scene.md) — governs
     `geometry/` and `render/`. Design 11. *implemented*
 12. [`pseudocode/12-session.md`](pseudocode/12-session.md) —
-    governs `ui/`, `cli/`, the front `scripts/scsim.py`, and the
-    `[project]` tables of `pyproject.toml`. Design 12. *implemented*
+    governs `ui/`, `cli/scsim.py`, and the `[project]` tables of
+    `pyproject.toml`; the front `scripts/scsim.py` and `cli/support.py`
+    are row 0's. Design 12. *implemented*
 13. `pseudocode/13-batch.md` — `sinks/`, `cli/scbatch.py` and its
     front `scripts/scbatch.py` (as P12.7 does for `scsim`).
     Design 13. *planned*
 
-Status is one of: planned, draft, reviewed, implemented, superseded.
+Status is one of: planned, draft, reviewed, implemented, superseded,
+inherited.
 
 ## Conventions
 
