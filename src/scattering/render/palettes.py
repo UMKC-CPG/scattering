@@ -43,6 +43,7 @@ N_ANNULUS_ROLES = 8
 ROLES = (['axis', 'plane', 'detector', 'unmeasured', 'probe', 'disc',
           'free_flight', 'orbit_plane', 'radius', 'polar', 'velocity',
           'turning', 'asymptote', 'deflection', 'tracked', 'trace',
+          'reference',
           'exact_curve', 'measured', 'stat_band', 'tail_band', 'recovered',
           'mirror', 'true_potential', 'text']
          + [f'annulus_{j}' for j in range(N_ANNULUS_ROLES)])
@@ -56,6 +57,7 @@ REDUNDANCY = [
     (('recovered', 'true_potential'), 'line_style'),
     (('tracked', 'disc'), 'weight'),
     (('exact_curve', 'mirror'), 'line_style'),
+    (('radius', 'reference'), 'line_style'),
 ]
 
 
@@ -72,6 +74,7 @@ def _palette(hues, foreground, background_dim, accent):
         'orbit_plane': Encoding(accent, 'solid', 1.0, 0.10, 'none'),
         'radius': Encoding(accent, 'solid', 2.0, 1.0, 'none'),
         'polar': Encoding(accent, 'solid', 2.0, 1.0, 'none'),
+        'reference': Encoding(accent, 'dotted', 1.5, 0.9, 'none'),
         'velocity': Encoding(accent, 'solid', 2.0, 1.0, 'none'),
         'turning': Encoding(accent, 'solid', 1.0, 1.0, 'cube'),
         'asymptote': Encoding(foreground, 'dotted', 1.5, 0.8, 'none'),

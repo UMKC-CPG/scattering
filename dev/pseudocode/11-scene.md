@@ -135,11 +135,16 @@ function tracked_markers(store, k, i, n, r_max) -> list of Geometry:
                      (recovered from polar: the direction at phi = 0)
     return [
       Segment(0, (x, y, z))                       role "radius"   label "r"
+      Segment(0, 0.25 r_max * pericenter_dir)     role "polar"
+                                          label "pericenter direction"
+                                          # dotted: the reference line
+                                          #   phi is measured from (D11.6)
       Arc(0, 0.3 r_max*?, pericenter_dir, (x,y,z)/r, plane normal)
                                                   role "polar"    label "phi"
       Arrow((x,y,z), v/|v|, display_length)       role "velocity"
                                                   label "v (direction only)"
-      Points([turning point on the trace])        role "turning"  label "r_min"
+      Points([turning point on the trace], 0.8 * glyph)
+                                                  role "turning"  label "r_min"
       Segment(entry asymptote), Segment(exit asymptote)
                                                   role "asymptote"
       Arc(between the two asymptote directions)

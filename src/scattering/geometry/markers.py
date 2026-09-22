@@ -39,13 +39,19 @@ def tracked_markers(store, energy_index, particle_index, sample_index,
     if np.linalg.norm(plane_normal) == 0.0:          # head-on: radial
         plane_normal = np.array([0.0, 1.0, 0.0])
 
+    arc_radius = 0.25 * r_max
     markers = [
         (Segment(np.zeros(3), position), 'radius', 'r'),
-        (Arc(np.zeros(3), 0.25 * r_max, pericenter_direction,
+        # The reference line phi is measured from (design 11.6): without
+        # it the arc below begins in empty space.
+        (Segment(np.zeros(3), arc_radius * pericenter_direction),
+         'reference', 'pericenter direction'),
+        (Arc(np.zeros(3), arc_radius, pericenter_direction,
              _unit(position), plane_normal), 'polar', 'phi'),
         (Arrow(position, _unit(velocity), arrow_length), 'velocity',
          'v (direction only)'),
-        (Points(positions[pericenter_sample][None, :], 1.4 * glyph_radius),
+        # Sized against the glyph, never the inner geometry (design 11.6).
+        (Points(positions[pericenter_sample][None, :], 0.8 * glyph_radius),
          'turning', 'r_min'),
     ]
 

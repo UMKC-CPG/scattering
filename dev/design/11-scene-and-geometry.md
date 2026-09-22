@@ -52,7 +52,8 @@ label travels with it. The inventory:
 | Probe-depth sphere | `r̃_min(b̃ = 0)` at the current energy | 2.3, G5 |
 | Scattering center | the origin | — |
 | Orbit plane | the tracked particle's plane, translucent | 4.3 |
-| `r` and `φ` markers | radius line and angle arc, tracked particle | 4.5 |
+| `r` and `φ` markers | radius line, the pericenter reference line, |
+| | and the angle arc between them, tracked particle | 4.5 |
 | Velocity arrow | `ṽ` of the tracked particle | 6.3 |
 | Turning-point marker | `r̃_min` on the tracked orbit | 2.3 |
 | Asymptote lines | incoming and outgoing, tracked particle | 2.4 |
@@ -185,6 +186,19 @@ in the scene:
   fixed display length as a direction, with its magnitude on the
   telemetry panel, exactly as the rigid-body tool draws `ω` and
   `L`. Its label says *"direction only"*.
+- **The tracked particle's markers** — the turning point and the
+  tracked glyph itself — are glyphs too, and are sized against the
+  particle glyph, not against the inner geometry: the turning point
+  at `0.8` of the glyph radius, so that it never dwarfs the
+  probe-depth sphere or the pericenter it marks.
+
+**`φ` needs both of its lines.** The angle `φ` is measured from the
+direction of closest approach, and an arc drawn from a direction
+that is not itself on screen begins in empty space. So the marker
+draws the **pericenter reference line**, from the centre out to the
+arc's radius along the pericenter direction, dotted and labelled;
+the arc then visibly runs from that line to the `r` line. (Added
+2026-09-22 after the arc's start was reported as unexplained.)
 
 Nothing else is scaled. The traces, the rings, the cones, the
 probe-depth sphere, and the asymptotes are at true scene scale.
