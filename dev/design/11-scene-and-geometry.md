@@ -228,6 +228,22 @@ loop cheap (Section 12) and is the thing the rendering-budget
 spike must measure: how many static traces and how many moving
 glyphs a software-rendered node sustains at an interactive rate.
 
+**What the budget measured (2026-09-22, software rendering on a
+1-CPU node, 1280 x 960, offscreen).** An empty window costs 131 ms
+per frame there, so 7.6 frames per second is that node's ceiling
+before anything is drawn. The particle glyphs as a mesh of `N`
+spheres cost 188 ms at `N = 400` and 2.9 s at `N = 20 000`; moving
+that mesh in place instead of rebuilding it saves little, because
+the cost is rasterizing `192 N` triangles, not building them. Drawn
+as VTK's point sprites (points shaded as spheres, no triangles) the
+cost is 140 ms at every `N` up to 20 000. The **traces** are the
+larger item: 400 static polylines of 120 points, as 400 separate
+actors, cost 806 ms per frame. Neither change is made yet; the
+shipped examples are sized so that the default node draws them, and
+the two changes — sprites for the glyphs, one merged polydata for
+all traces — are the render-budget task in `dev/TODO.md`, to be
+taken up after the tool has been tried on a student's own computer.
+
 The batch tier builds no scene description. `geometry/` writes the
 rings, cones, and probe-depth spheres to HDF5 as geometry (Section
 13), and ParaView draws them.

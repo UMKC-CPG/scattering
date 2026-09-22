@@ -355,6 +355,8 @@ class VedoRenderer:
         self.plotter.remove(self.frame_actors)
         self.frame_actors = [actor_for(d, self.palette) for d in scene.dynamic]
         self.plotter.add(self.frame_actors)
+        # The per-frame rebuild of the particle mesh is measured and
+        # deferred (D11.7, dev/TODO.md); sprites are the planned fix.
         self.draw_text(scene.telemetry.lines(), "top-right")
         self.draw_text(ring_lines, "top-left", colour line j by hue j)
         if self.legend_visible: self.draw_text(KEY_LEGEND, "bottom-left")

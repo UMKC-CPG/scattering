@@ -60,13 +60,18 @@ numbering so older cross-references still resolve.
       at 400 and 2.0 s at 2000, because `build_frame` makes a new
       mesh of N spheres every frame. Shipped at 400 (the histogram of
       design 7 needs 20 000, a batch-tier size; the file says so).
-- [ ] (A9.3, P11.6) The per-frame glyph rebuild above is the
-      rendering budget: below 2 frames per second at 400 particles is
-      not interactive. Update the particle actor's positions in place
-      (vedo's `points()` setter on one `Spheres` mesh, or point
-      sprites) instead of rebuilding it each frame, then re-run
-      `dev/spikes/render_budget.py` on an interactive compute node
-      and set the Tier-1 default `n_particles` from the result.
+- [ ] (A9.3, P11.6) Render budget, measured 2026-09-22 (D11.7 has
+      the table): moving the glyph mesh in place saves little, since
+      the cost is rasterizing 192 N triangles; VTK point sprites
+      (`Points.render_points_as_spheres`) are flat in N; and the 400
+      traces as 400 actors cost 806 ms per frame, the largest item.
+      Deferred by decision (2026-09-22): the shipped 400-particle
+      example is assumed fine until tried on a student's own
+      computer. Then: (1) draw all traces of one energy as ONE
+      polydata actor; (2) draw the glyphs as sprites, with the pixel
+      size computed each frame from the camera distance so that the
+      labelled radius in natural units still holds (D11.6); (3) re-run
+      `dev/spikes/render_budget.py` and set the default `n_particles`.
 
 ---
 
