@@ -52,16 +52,21 @@ numbering so older cross-references still resolve.
       to update by comparing versions, not code, so an unchanged
       number means `pip install --upgrade` does nothing (physdemo
       README, "Updating a tool").
-- [ ] (A9.3, examples) `rutherford_disc` as shipped (20 000
-      particles) takes over ten minutes to reach its first frame. Find
-      where the time goes (store build, or 20 000 glyphs and traces),
-      then either make the scene cheap for a disc beam or ship the
-      example at a size that starts in seconds. Until then a student's
-      second command is a trap. Same measurement as the next entry.
-- [ ] (A9.3) Re-run `dev/spikes/render_budget.py` on an interactive
-      compute node (`srun --partition=interactive`); the first run
-      was on a loaded 1-CPU management node and is indicative only.
-      Then set the Tier-1 default `n_particles` from it.
+- [x] (A9.3, examples) `rutherford_disc` as shipped (20 000
+      particles) took over ten minutes to reach its first frame.
+      Measured 2026-09-22 (offscreen, 1280 x 960, this node): the
+      store build is cheap (0.8 s at 400 particles, 3.4 s at 2000);
+      the cost that scales is the PER-FRAME redraw, 0.59 s per frame
+      at 400 and 2.0 s at 2000, because `build_frame` makes a new
+      mesh of N spheres every frame. Shipped at 400 (the histogram of
+      design 7 needs 20 000, a batch-tier size; the file says so).
+- [ ] (A9.3, P11.6) The per-frame glyph rebuild above is the
+      rendering budget: below 2 frames per second at 400 particles is
+      not interactive. Update the particle actor's positions in place
+      (vedo's `points()` setter on one `Spheres` mesh, or point
+      sprites) instead of rebuilding it each frame, then re-run
+      `dev/spikes/render_budget.py` on an interactive compute node
+      and set the Tier-1 default `n_particles` from the result.
 
 ---
 

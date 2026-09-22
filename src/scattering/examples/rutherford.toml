@@ -20,7 +20,7 @@ preset = "alpha_on_gold"        # kappa = Z1 Z2 e^2 / 4 pi eps0, m = m_alpha
 # reference energy unless reference_energy is set. Each particle is
 # run at every energy, so one particle can be followed across the
 # sweep with the energy slider.
-energies = ["3 MeV", "5 MeV", "8 MeV"]
+energies = ["2 MeV", "3 MeV", "4 MeV", "5 MeV", "6.5 MeV", "8 MeV"]
 
 # Impact-parameter layout. "annuli" is the teaching picture: a ring
 # of particles at one b lands on one cone. "disc" is uniform flux,

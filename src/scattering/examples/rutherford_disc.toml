@@ -10,7 +10,13 @@ preset = "alpha_on_gold"
 [beam]
 energies    = ["5 MeV"]
 layout      = "disc"
-n_particles = 20000
+# 400 starts in seconds and shows the detector's idea (with the shipped
+# 40 log-theta bins about a third of them are empty, which is itself a
+# lesson in counting statistics). The histogram of design 7, with no
+# empty bins and a pull rms near 1, needs 20000 or more; that is a
+# batch-tier size (design 13) and takes minutes to draw interactively,
+# because each frame redraws every particle.
+n_particles = 400
 b_min       = 0.0
 b_max       = 12.0
 seed        = 20260910          # REQUIRED for "disc": a run that depends
