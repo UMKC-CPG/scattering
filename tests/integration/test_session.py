@@ -239,15 +239,17 @@ def test_rebuilding_the_static_scene_removes_the_old_actors(run):
     rc = RcSettings()
     run_session(resolved, store, ScriptedControls([(1, 'quit')], 3),
                 renderer, rc)
-    view = renderer.plotter.at(0)
-    before = len(view.get_actors())
+    # Ask VTK itself: vedo's get_actors() does not count line actors.
+    def count():
+        return renderer.plotter.at(0).renderer.GetActors().GetNumberOfItems()
+    before = count()
     state = run_session(resolved, store, ScriptedControls(
         [(1, 'graticule_more'), (2, 'palette'), (3, 'quit')], 6),
         renderer, rc)
     # Two more latitude lines and four more meridians, nothing stacked.
-    assert len(view.get_actors()) == before + 2 + 4
+    assert count() == before + 2 + 4
     run_session(resolved, store, ScriptedControls(
         [(1, 'graticule_fewer'), (2, 'quit')], 5), renderer, rc,
         state=state)
-    assert len(view.get_actors()) == before
+    assert count() == before
     renderer.close()
