@@ -32,6 +32,12 @@ and, for run controls, `resolve` (P10.7) and `build_results_store`
 | `resolve(spec, rc)`, `build_results_store(resolved)` | P10.7, P6.4 |
 | `write_back(resolved, path)` | P10.8 |
 | `rc.window_size`, `rc.output_dir` | P10.6 |
+| `rc.glyph_radius_fraction` — handed to `build_frame` | P10.6 |
+| `renderer.read_camera()`, `renderer.legend_visible` | P11.6 |
+| `renderer.set_graticule(n)` | P11.6 |
+| `PanelWindows.update / pump / close` | P11.6 |
+| `ring_legend_lines(store, resolved, k, hidden_rings)` | P11.4 |
+| slider commands `("seek", n)`, `("set_energy", k)` | P12.5 |
 
 The rigid-body tool's `ui/interactive_session.py` and
 `ui/vedo_controls.py` are the model: a controls source with
@@ -57,7 +63,11 @@ record SessionState:                # all VIEWING state (D12.2)
     camera         {azimuth_deg, elevation_deg, distance}
     panels         list of str
     detector_mode  str      "asymptotic" | "position"   (P7; viewing)
+    detector_layout str
     show_mirror    bool
+    hidden_rings   frozenset of int     D11.11; empty = all shown
+    graticule_lines int                 D11.12; 12, in [4, 36]
+    legend_visible bool                 D12.15
 
 record Session:                     # what the loop owns
     resolved       ResolvedRun
@@ -103,6 +113,20 @@ function set_energy(state, new_index, n_samples) -> state:
 function set_rate(state, factor) -> state:
     return replace(state, rate=clamp(state.rate * factor, 1, 16))
 
+function toggle_ring(state, j, n_rings) -> state:
+    # D11.11. j outside [0, n_rings) is ignored.
+    if not 0 <= j < n_rings: return state
+    hidden = state.hidden_rings ^ {j}           # symmetric difference
+    return replace(state, hidden_rings=hidden)
+
+function toggle_all_rings(state, n_rings) -> state:
+    if state.hidden_rings: return replace(state, hidden_rings=frozenset())
+    return replace(state, hidden_rings=frozenset(range(n_rings)))
+
+function set_graticule(state, delta) -> state:
+    return replace(state, graticule_lines=clamp(state.graticule_lines
+                                                + delta, 4, 36))
+
 function cycle_tracked(state, store, delta) -> state:
     # D12.6: annuli layouts cycle ring-major (particles are contiguous
     # by ring, P3.3, so index order IS ring-major); disc layouts cycle
@@ -122,31 +146,53 @@ The table of D12.4 as data, so that the legend and the dispatcher
 read one source:
 
 ```
+# D12.15: every key is a Ctrl chord. Keys arrive from vedo already
+# prefixed ("Ctrl+s", "Ctrl+minus", "Ctrl+bracketleft"); they are
+# matched case-SENSITIVELY, because Shift changes the key symbol
+# ("Ctrl+S" is Ctrl+Shift+s) and that is how step-back is told from
+# step. Aliases map several symbols to one command so that a chord
+# feels natural whatever a keyboard's shift state names the key.
 BINDINGS = {
-  "space": ("play_pause",   "toggle playing"),
-  "r":     ("reverse",      "flip direction"),
-  ".":     ("step_forward", "one frame, then pause"),
-  ",":     ("step_back",    "one frame back, then pause"),
-  "plus":  ("faster",       "rate x2, up to 16"),
-  "minus": ("slower",       "rate / 2, down to 1"),
-  "e":     ("jump_entry",   "tracked particle's entry"),
-  "p":     ("jump_pericenter", "tracked particle's pericenter"),
-  "x":     ("jump_exit",    "tracked particle's exit"),
-  "Home":  ("jump_start", ""),  "End": ("jump_end", ""),
-  "l":     ("loop",         "toggle loop at the end"),
-  "bracketleft":  ("energy_down", ""),  "bracketright": ("energy_up", ""),
-  "Tab":   ("track_next",   "next tracked particle"),
-  "m":     ("mirror",       "toggle the mirror deflection curve"),
-  "d":     ("detector_mode","asymptotic / position"),
-  "c":     ("palette",      "cycle light / dark / colorblind"),
-  "s":     ("save",         "write the resolved run file"),
-  "h":     ("help",         "show this legend"),
-  "q":     ("quit",         ""),
+  "Ctrl+space":   ("play_pause",   "play / pause"),
+  "Ctrl+s":       ("step_forward", "one frame, then pause"),
+  "Ctrl+S":       ("step_back",    "one frame back, then pause"),
+  "Ctrl+plus":    ("faster",       "rate x2, up to 16"),
+  "Ctrl+equal":   ("faster",       None),                  # alias
+  "Ctrl+minus":   ("slower",       "rate / 2, down to 1"),
+  "Ctrl+underscore": ("slower",    None),                  # alias
+  "Ctrl+n":       ("normal",       "rate 1"),
+  "Ctrl+0":       ("normal",       None),                  # alias
+  "Ctrl+r":       ("reverse",      "flip direction"),
+  "Ctrl+e":       ("jump_entry",   "tracked particle's entry"),
+  "Ctrl+p":       ("jump_pericenter", "tracked particle's pericenter"),
+  "Ctrl+x":       ("jump_exit",    "tracked particle's exit"),
+  "Ctrl+Home":    ("jump_start",   "first frame"),
+  "Ctrl+End":     ("jump_end",     "last frame"),
+  "Ctrl+l":       ("loop",         "toggle loop at the end"),
+  "Ctrl+comma":   ("energy_down",  "previous energy"),
+  "Ctrl+period":  ("energy_up",    "next energy"),
+  "Ctrl+Tab":     ("track_next",   "next tracked particle"),
+  "Ctrl+1" .. "Ctrl+9": ("ring_1" .. "ring_9", "toggle ring i"),
+  "Ctrl+a":       ("rings_all",    "toggle all rings"),
+  "Ctrl+bracketleft":  ("graticule_fewer", "fewer latitude lines"),
+  "Ctrl+bracketright": ("graticule_more",  "more latitude lines"),
+  "Ctrl+m":       ("mirror",       "toggle the mirror deflection curve"),
+  "Ctrl+d":       ("detector_mode","asymptotic / position"),
+  "Ctrl+b":       ("detector_layout", "cycle the bin layout"),
+  "Ctrl+c":       ("palette",      "cycle light / dark / colorblind"),
+  "Ctrl+w":       ("save",         "write the resolved run file"),
+  "Ctrl+h":       ("legend",       "hide / show this legend"),
+  "Ctrl+q":       ("quit",         "quit"),
+  "q": ("quit", None), "Escape": ("quit", None),   # VTK closes on these
 }
+# Slider commands carry a value and are not in BINDINGS:
+#   ("seek", n)        -> jump to frame n, then pause     (time slider)
+#   ("set_energy", k)  -> set_energy(state, k, S)         (energy slider)
 
 function apply(command, session) -> Session:
     state, store = session.state, session.store
     S = store.n_samples
+    n_rings = len(resolved.spec.beam.annuli) if annuli else 8
     match command:
       "play_pause":   state = replace(state, playing=not state.playing)
       "reverse":      state = replace(state, direction=-state.direction)
@@ -154,6 +200,7 @@ function apply(command, session) -> Session:
       "step_back":    state = step(state, S, -1)
       "faster":       state = set_rate(state, 2)
       "slower":       state = set_rate(state, 0.5)
+      "normal":       state = replace(state, rate=1)
       "jump_entry":   state = jump(state, S, store.entry_index[k, tracked])
       "jump_pericenter":
           k, i = state.energy_index, state.tracked
@@ -161,23 +208,38 @@ function apply(command, session) -> Session:
       "jump_exit":    state = jump(state, S, store.exit_index[k, tracked])
       "jump_start":   state = jump(state, S, 0)
       "jump_end":     state = jump(state, S, S - 1)
+      ("seek", n):    state = step-like: replace(jump(state, S, n),
+                                                 playing=False)
       "loop":         state = replace(state, loop=not state.loop)
       "energy_down" | "energy_up":
           k = clamp(state.energy_index -/+ 1, 0, store.n_energies - 1)
           state = set_energy(state, k, S)
+      ("set_energy", k): state = set_energy(state, clamp(k), S)
       "track_next":   state = cycle_tracked(state, store, +1)
+      "ring_i":       state = toggle_ring(state, i - 1, n_rings)
+      "rings_all":    state = toggle_all_rings(state, n_rings)
+      "graticule_fewer" | "graticule_more":
+          state = set_graticule(state, -2 / +2)
+          session.renderer.set_graticule(state.graticule_lines)
       "mirror":       state = replace(state, show_mirror=not ...)
       "detector_mode": state = replace(state, detector_mode=other)
+      "detector_layout": state = replace(state, detector_layout=next)
       "palette":      state = replace(state, palette=next in cycle)
                       session.renderer.set_palette(state.palette)
-      "save":         write_back(session.resolved with view = state,
+      "save":         state = replace(state,
+                                      camera=session.renderer.read_camera())
+                      write_back(session.resolved with view = state,
                                  rc.output_dir / "<stem>.resolved.toml")
-      "help":         session.renderer.show_legend(BINDINGS)
+      "legend":       state = replace(state, legend_visible=not ...)
+                      session.renderer.legend_visible = state.legend_visible
       "quit":         session.running = False
     return replace(session, state=state)
 
 function control_legend_lines() -> list of str:
-    return [f"{key:>8}  {help}" for key, (_, help) in BINDINGS.items()]
+    # One line per DISTINCT command with a help text; aliases (help
+    # None) are not listed. Drawn permanently, D12.15.
+    return [f"{key:>18}  {help}" for key, (_, help) in BINDINGS.items()
+            if help is not None]
 ```
 
 **`save` must not end the session.** The tool is routinely run from
@@ -208,8 +270,13 @@ class VedoControls(ControlsSource):
     __init__(plotter):
         plotter.add_callback("KeyPress", self._on_key_press)
         self.queue = []
-    _on_key_press(event): key = event.keypress; if key in BINDINGS:
-        self.queue.append(BINDINGS[key][0])
+    _on_key_press(event):
+        key = event.keypress            # arrives as "Ctrl+s" etc.
+        if key in BINDINGS: self.queue.append(BINDINGS[key][0])
+        # Unchorded keys other than q / Escape are VTK's own and are
+        # ignored here (D12.15).
+    push(command):                      # from the renderer's sliders
+        self.queue.append(command)      # ("seek", n) / ("set_energy", k)
     read(): q, self.queue = self.queue, []; return q
     pump():
         interactor = plotter.interactor
@@ -234,14 +301,18 @@ class ScriptedControls(ControlsSource):
 function run_session(resolved, store, controls, renderer, rc,
                      initial_state=None) -> SessionState:
     state = initial_state or SessionState(
-        energy_index=0, frame_index=0, rate=1, playing=False,
+        energy_index=0, frame_index=0, rate=1, playing=True,   # D12.4
         direction=+1, loop=False,
         tracked=resolved.spec.view.tracked_particle,
         palette=resolved.spec.view.palette,
         camera=resolved.spec.view.camera,
         panels=resolved.spec.view.panels,
-        detector_mode="asymptotic", show_mirror=False)
+        detector_mode="asymptotic", show_mirror=False,
+        hidden_rings=frozenset(), graticule_lines=12,
+        legend_visible=True)
     session = Session(resolved, store, state, renderer, controls, {}, ...)
+    panels = PanelWindows(state.panels, palette, background,
+                          offscreen=renderer.offscreen)          # P11.6
     session.running = True
     wall_start = now();  scene_advanced = 0.0
     while session.running and not controls.window_closed():
@@ -251,26 +322,43 @@ function run_session(resolved, store, controls, renderer, rc,
         scene_advanced += |store.time_of(k, state.frame_index)
                            - store.time_of(k, previous)|
         # 2. Build the scene: static from the cache, dynamic now.
-        view_key = (state.palette, state.show_mirror, state.tracked)
+        view_key = (state.palette, state.show_mirror, state.tracked,
+                    state.hidden_rings, state.detector_layout,
+                    state.detector_mode)
         if (state.energy_index, view_key) not in session.static_cache:
             session.static_cache[...] = build_static(store, resolved,
                                                      state.energy_index, state)
         dynamic, telemetry = build_frame(store, resolved,
                                          state.energy_index,
-                                         state.frame_index, state.tracked)
+                                         state.frame_index, state.tracked,
+                                         state.hidden_rings, rc)
+        ring_lines = ring_legend_lines(store, resolved, state.energy_index,
+                                       state.hidden_rings)
         telemetry.ratio_of_scene_to_wall_time = scene_advanced
                                                 / max(1e-9, now() - wall_start)
         scene = Scene(static=session.static_cache[...], dynamic=dynamic,
                       telemetry=telemetry)
-        # 3. Draw once.
-        renderer.render(scene, state.camera, state.energy_index, view_key)
-        # 4. Pump and apply controls.
-        controls.pump()
+        # 3. Draw once; the panels only when their key changed.
+        renderer.render(scene, state.camera, state.energy_index, view_key,
+                        state, ring_lines)
+        for name in state.panels:
+            panel_key = (state.energy_index, state.tracked,
+                         state.show_mirror, state.detector_layout,
+                         state.detector_mode, state.palette)
+            panels.update(name, build_panel(name, ...), panel_key)
+        # 4. Pump both event queues and apply controls.
+        controls.pump(); panels.pump()
         for command in controls.read():
             session = apply(command, session)
         state = session.state
+    panels.close()
     return state
 ```
+
+The camera in `state.camera` is the run file's view until `save`
+reads the live one back (P12.4); the renderer applies it only when
+the dict changes (P11.6), so mouse rotation and zoom are never undone
+(D12.14).
 
 No physics runs in the loop (D12.3): step 2 is slicing and glyph
 placement. The static cache is keyed by everything a static
@@ -422,6 +510,19 @@ in 12.10:
 - The loop draws at least one frame per tick with no physics call
   on the stack: `ui/` imports nothing from `orbits/`, `deflection/`,
   or `potentials/` (A8.6(1) extended; a structural test).
+- Every key in `BINDINGS` except `q` and `Escape` begins `Ctrl+`;
+  every command the dispatcher accepts has at least one key, and
+  every key's command is accepted (the two tables agree).
+- `toggle_ring` on ring 2 twice restores the state; `toggle_all_rings`
+  from all-shown hides every ring, and again shows every ring;
+  `set_graticule` clamps to `[4, 36]`.
+- A scripted session issuing `("seek", 7)` ends paused on frame 7;
+  `("set_energy", 1)` gives the same state as `energy_up` from 0.
+- A scripted session with no camera command calls the renderer's
+  camera-setting code once (a counter on the offscreen renderer);
+  `save` after the renderer's camera was moved writes that camera.
+- `initial_state` is playing; the run file's `[view]` still sets the
+  camera, palette, tracked particle, and panels.
 
 ---
 

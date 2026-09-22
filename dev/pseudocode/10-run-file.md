@@ -260,7 +260,8 @@ record RcSettings:                  # extends pseudocode 6.3
                                      "effective_potential",
                                      "error_budget", "telemetry"]
     window_size            (int, int)  (1280, 960)
-    glyph_radius           float    0.02      (D11.6, natural units)
+    glyph_radius_fraction  float    0.03      (D11.6, of R_max; was an
+                                             absolute 0.02, invisible)
     output_dir             str      "."
 
 # The camera distance (3.0 -> 4.0, which stops the default view

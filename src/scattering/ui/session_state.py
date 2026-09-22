@@ -33,6 +33,13 @@ class SessionState:
     detector_mode: str = 'asymptotic'
     detector_layout: str = 'log_theta'
     show_mirror: bool = False
+    # Which rings (or bands of b, for a disc) are hidden; design 11.11.
+    hidden_rings: frozenset = frozenset()
+    # Latitude lines on the detector sphere's graticule; design 11.12.
+    graticule_lines: int = 12
+    legend_visible: bool = True
+
+GRATICULE_MIN, GRATICULE_MAX = 4, 36
 
 
 def _clamp(value, low, high):
@@ -71,6 +78,29 @@ def set_energy(state, new_index, n_samples):
 def set_rate(state, factor):
     return replace(state, rate=int(_clamp(round(state.rate * factor), 1,
                                           MAX_RATE)))
+
+
+def toggle_ring(state, ring, n_rings):
+    """Hide ring `ring` if shown, show it if hidden (pseudocode 12.3,
+    design 11.11). An index outside the beam's rings is ignored, so
+    that Ctrl+7 on a three-ring beam does nothing."""
+    if not 0 <= ring < n_rings:
+        return state
+    return replace(state, hidden_rings=state.hidden_rings ^ {ring})
+
+
+def toggle_all_rings(state, n_rings):
+    """Show every ring if any is hidden; otherwise hide them all (the
+    tracked particle stays drawn regardless, design 11.11)."""
+    if state.hidden_rings:
+        return replace(state, hidden_rings=frozenset())
+    return replace(state, hidden_rings=frozenset(range(n_rings)))
+
+
+def set_graticule(state, delta):
+    """More or fewer latitude lines, within design 11.12's bounds."""
+    return replace(state, graticule_lines=_clamp(
+        state.graticule_lines + delta, GRATICULE_MIN, GRATICULE_MAX))
 
 
 def cycle_tracked(state, store, delta):

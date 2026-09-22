@@ -166,7 +166,7 @@ def self_check():
 
         started = time.perf_counter()
         renderer = VedoRenderer(resolved.spec.view.palette, (640, 480),
-                                offscreen=True, panels=())
+                                offscreen=True)
         run_session(resolved, store, ScriptedControls([], 2), renderer, rc)
         image = renderer.screenshot(as_array=True)
         renderer.close()

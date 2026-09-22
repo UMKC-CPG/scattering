@@ -94,8 +94,36 @@ def test_cycle_tracked_visits_every_particle_once():
 
 
 def test_bindings_table_is_consistent():
-    assert len(COMMANDS) == len(BINDINGS)
+    """Design 12.15: every key is a Ctrl chord (bar VTK's own q and
+    Escape), aliases are not listed in the legend, and the legend names
+    every distinct command once."""
     assert 'quit' in COMMANDS and 'play_pause' in COMMANDS
+    for key in BINDINGS:
+        assert key.startswith('Ctrl+') or key in ('q', 'Escape'), key
     lines = control_legend_lines()
-    assert len(lines) == len(BINDINGS)
-    assert any('toggle playing' in line for line in lines)
+    with_help = [key for key, (_, help_text) in BINDINGS.items()
+                 if help_text is not None]
+    assert len(lines) == len(with_help)
+    assert any('play / pause' in line for line in lines)
+    assert any('Ctrl+[' in line for line in lines)
+    assert any('Ctrl+Shift+s' in line for line in lines)
+    commands_with_help = {BINDINGS[key][0] for key in with_help}
+    assert commands_with_help == COMMANDS - {
+        f'ring_{i}' for i in range(2, 10)}
+
+
+def test_ring_toggles_and_graticule():
+    """Pseudocode 12.3: toggle_ring, toggle_all_rings, set_graticule."""
+    from scattering.ui.session_state import (GRATICULE_MAX, GRATICULE_MIN,
+        set_graticule, toggle_all_rings, toggle_ring)
+    state = SessionState()
+    assert toggle_ring(toggle_ring(state, 2, 5), 2, 5) == state
+    assert toggle_ring(state, 7, 5) == state           # no such ring
+    hidden = toggle_all_rings(state, 5)
+    assert hidden.hidden_rings == frozenset(range(5))
+    assert toggle_all_rings(hidden, 5).hidden_rings == frozenset()
+    assert toggle_all_rings(toggle_ring(state, 1, 5), 5).hidden_rings == \
+        frozenset()                                    # any hidden -> all
+    low = set_graticule(state, -100)
+    assert low.graticule_lines == GRATICULE_MIN
+    assert set_graticule(low, +1000).graticule_lines == GRATICULE_MAX

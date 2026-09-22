@@ -168,7 +168,7 @@ def main(command_line_args=None):
     from scattering.ui.vedo_controls import parse_script
 
     renderer = VedoRenderer(resolved.spec.view.palette, rc.window_size,
-        offscreen=args.offscreen, panels=resolved.spec.view.panels)
+                            offscreen=args.offscreen)
     if args.frames or args.script:
         script = parse_script(args.script)
         max_frames = args.frames or (max(t for t, _ in script) + 2)

@@ -25,9 +25,16 @@ class VedoControls:
             pass
 
     def _on_key_press(self, event):
+        # Keys arrive already chorded ("Ctrl+s"); anything not in the
+        # table is VTK's own and is left to it (design 12.15).
         key = getattr(event, 'keypress', None)
         if key in BINDINGS:
             self.queue.append(BINDINGS[key][0])
+
+    def push(self, command):
+        """A command with a value from a slider (pseudocode 12.5):
+        ('seek', frame) or ('set_energy', k). Applied like a key."""
+        self.queue.append(command)
 
     def read(self):
         commands, self.queue = self.queue, []

@@ -75,8 +75,8 @@ def test_orbit_plane_contains_the_orbit(run):
 
 def test_drawables_are_named_quantities(run):
     resolved, store = run
-    static = build_static(store, resolved, 1, 2, 0.02)
-    dynamic, telemetry = build_frame(store, resolved, 1, 20, 2, 0.02,
+    static = build_static(store, resolved, 1, 2, 0.24)
+    dynamic, telemetry = build_frame(store, resolved, 1, 20, 2, 0.24,
                                      resolved.scales)
     for drawable in static + dynamic:
         assert drawable.quantity and drawable.section

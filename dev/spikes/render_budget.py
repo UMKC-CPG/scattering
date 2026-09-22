@@ -53,21 +53,22 @@ def measure(n_particles, frames, size, panels):
     build_start = time.time()
     store = build_results_store(resolved)
     build_seconds = time.time() - build_start
-    renderer = VedoRenderer('light', size, offscreen=True, panels=panels)
-    static = build_static(store, resolved, 0, 0, rc.glyph_radius)
+    renderer = VedoRenderer('light', size, offscreen=True)
+    glyph = rc.glyph_radius_fraction * resolved.settings.r_max
+    static = build_static(store, resolved, 0, 0, glyph)
     dynamic, telemetry = build_frame(store, resolved, 0, 0, 0,
-                                     rc.glyph_radius, resolved.scales)
+                                     glyph, resolved.scales)
     key = (0, 'light', 0)
     renderer.render(Scene(static, dynamic, telemetry),
-        resolved.spec.view.camera, key, store=store, resolved=resolved)
+        resolved.spec.view.camera, key, resolved=resolved)
     first = renderer.screenshot(as_array=True)
     start = time.time()
     for frame in range(1, frames + 1):
         n = frame % store.n_samples
         dynamic, telemetry = build_frame(store, resolved, 0, n, 0,
-                                         rc.glyph_radius, resolved.scales)
+                                         glyph, resolved.scales)
         renderer.render(Scene(static, dynamic, telemetry),
-            resolved.spec.view.camera, key, store=store, resolved=resolved)
+            resolved.spec.view.camera, key, resolved=resolved)
     elapsed = time.time() - start
     last = renderer.screenshot(as_array=True)
     renderer.close()

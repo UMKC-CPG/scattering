@@ -61,7 +61,8 @@ does — not a timer callback hung off VTK's interactor. Per tick:
   2. build the per-frame drawables for (energy_index, frame_index)
      from the store (Section 11.7); static drawables are cached
   3. hand the scene to the renderer; it draws once
-  4. pump the window's event queue; apply any control changes
+  4. pump the 3D window's event queue and matplotlib's (11.10);
+     apply any control changes
 ```
 
 **No physics runs in the loop.** Step 2 is array slicing (Section
@@ -86,14 +87,30 @@ All are changes to `frame_index` in `[0, n_samples − 1]`:
 
 | Control | Effect | Key |
 | --- | --- | --- |
-| Play / pause | advance by `+rate` per tick, or `0` | `space` |
-| Reverse | advance by `−rate` | `r` |
-| Step | `±1`, then pause | `.` / `,` |
-| Speed | `rate` in frames per tick, `1` to `16` | `+` / `−` |
-| Jump | to tracked particle's entry / pericenter / exit | `e` `p` `x` |
-| Home / end | `0` / `n_samples − 1` | `Home` / `End` |
-| Slider | any frame, drag | mouse |
-| Loop | wrap at the end, or stop | `l` |
+| Play / pause | advance by `+rate` per tick, or `0` | `Ctrl+space` |
+| Reverse | advance by `−rate` | `Ctrl+r` |
+| Step | `±1`, then pause | `Ctrl+s` / `Ctrl+Shift+s` |
+| Speed | `rate` in frames per tick, `1` to `16` | `Ctrl++` / `Ctrl+−` |
+| Normal speed | `rate = 1` | `Ctrl+n` |
+| Jump | entry / pericenter / exit of tracked | `Ctrl+e` `Ctrl+p` `Ctrl+x` |
+| Home / end | `0` / `n_samples − 1` | `Ctrl+Home` / `Ctrl+End` |
+| Slider | any frame, drag | the **time slider** |
+| Loop | wrap at the end, or stop | `Ctrl+l` |
+
+Every key is a `Ctrl` chord, for the reason the rigid-body tool
+chose them (12.15): a bare letter typed into a VTK window is taken
+by VTK's own bindings (`s` for surface, `w` for wireframe, `r` to
+reset the camera), and a student cannot tell the tool's keys from
+VTK's. The chords are listed on the 3D window permanently.
+
+**The session starts playing.** A student who opens the tool sees
+the beam in flight; the first version started paused and showed a
+still picture until `space` was found.
+
+**The time slider** is a widget along the bottom of the 3D window
+(vedo's slider, the only widget that can share the scene). Dragging
+it sets `frame_index` and pauses; it follows the frame while
+playing; its label shows `t̃` and the frame index.
 
 Reverse is exact: it reads the same stored frames backwards (G4).
 The telemetry shows `t̃` and the frame index, and the ratio of
@@ -108,8 +125,10 @@ displayed `t̃` per frame differs — which is the point.
 
 ## 12.5 The energy slider (G5)
 
-`energy_index` in `[0, n_energies − 1]`, changed by a slider or by
-`[` / `]`. Because each particle exists at every energy (Section
+`energy_index` in `[0, n_energies − 1]`, changed by the **energy
+slider** (a second widget in the 3D window, at the right edge, with
+`n_energies` stops) or by `Ctrl+,` / `Ctrl+.` (the brackets belong to
+the graticule, 11.12). Because each particle exists at every energy (Section
 3.2), the slider changes nothing about *which* particles are shown,
 only their orbits. The frame index is preserved as a **fraction of
 the run**, `frame / n_samples` (Section 6.2), so that the picture
@@ -134,7 +153,7 @@ velocity arrow, turning point, asymptotes, and deflection arc are
 drawn (Section 11.2), its residual series fills the error-budget
 panel (Section 9.3), and its effective potential is plotted. It is
 chosen by clicking a glyph or a trace, by index in `[view]`, or by
-cycling with `Tab`. Choosing it is a viewing control.
+cycling with `Ctrl+Tab`. Choosing it is a viewing control.
 
 For an annulus layout the natural choice is one particle per ring;
 `Tab` cycles through rings first and azimuths second. For a disc
@@ -231,6 +250,15 @@ whole content is interaction.
   on the stack (an import-time check that `ui/` imports nothing
   from `orbits/` or `deflection/` directly; it reaches them only
   through `run/`).
+- The renderer sets the camera only when the session's camera
+  changes (12.14): after a scripted sequence with no camera command
+  the renderer's camera-set count is one.
+- `Save` after a camera change made through the renderer writes
+  that camera to the run file (12.14).
+- Every binding in the table is a `Ctrl` chord, and every command in
+  the dispatcher has exactly one binding (12.15).
+- Dragging either slider yields the same state as the equivalent
+  key command (12.4, 12.5).
 
 ---
 
@@ -250,6 +278,77 @@ seconds for a Tier-1 run, and the budget is shown first.
 change.** Rejected; 12.5 and Section 6.2.
 
 **An "exaggerate deflection" slider.** Rejected; 12.9.
+
+**Bare letters for keys.** Rejected 2026-09-22; 12.4 and 12.15.
+
+**Panels as pictures inside the 3D window.** Rejected 2026-09-22;
+11.10.
+
+**Reapplying the run-file camera every frame.** It was never
+chosen; it was a bug (12.14), recorded here so that "the camera
+must match the run file" is not proposed as a reason to restore it.
+
+---
+
+## 12.14 The camera belongs to the mouse
+
+The run file's `[view] camera` (azimuth, elevation, distance) is the
+**starting** view, and the view a `Save` records. Between those two
+moments the camera belongs to the mouse: VTK's own interaction —
+drag to rotate, wheel to zoom, middle-drag to pan — is the right
+tool and needs no help. So the renderer applies the session's camera
+**only when it changes**: at the first frame, after a run-file edit,
+and after any future camera command; on every other frame it leaves
+the camera exactly where the student put it. The first version
+reapplied the stored numbers on *every* frame, so that each drag or
+zoom was undone a few milliseconds later; the scene appeared to
+snap back, and could not be rotated at all.
+
+`Save` reads the camera *back* from the renderer into the session
+before writing, so that a view found by dragging is kept, and
+reopening the saved run file shows it. A future `Ctrl+f` ("fit to
+scene") is a camera command under the same rule (`dev/TODO.md`).
+
+Distance is stored as a multiple of `R̃_detect`, as before, so that
+the same run file frames the scene for any detector radius.
+
+---
+
+## 12.15 The key scheme
+
+All keys are `Ctrl` chords, one scheme for every tool of the suite,
+taken from the rigid-body tool (`rigid_body/dev/PSEUDOCODE.md` §15):
+
+| Chord | Command | Section |
+| --- | --- | --- |
+| `Ctrl+space` | play / pause | 12.4 |
+| `Ctrl+s`, `Ctrl+Shift+s` | step forward / back | 12.4 |
+| `Ctrl+−`, `Ctrl++`, `Ctrl+n` (`Ctrl+0`) | slower, faster, normal | 12.4 |
+| `Ctrl+r` | reverse | 12.4 |
+| `Ctrl+e`, `Ctrl+p`, `Ctrl+x` | jump to entry, pericenter, exit | 12.4 |
+| `Ctrl+Home`, `Ctrl+End` | first, last frame | 12.4 |
+| `Ctrl+l` | loop | 12.4 |
+| `Ctrl+,`, `Ctrl+.` | previous, next energy | 12.5 |
+| `Ctrl+Tab` | next tracked particle | 12.6 |
+| `Ctrl+1` … `Ctrl+9`, `Ctrl+a` | toggle ring `i`; toggle all | 11.11 |
+| `Ctrl+[`, `Ctrl+]` | fewer, more graticule lines | 11.12 |
+| `Ctrl+m` | mirror deflection curve | 5.6 |
+| `Ctrl+d`, `Ctrl+b` | detector mode, bin layout | 12.7 |
+| `Ctrl+c` | palette | 11.5 |
+| `Ctrl+w` | write (save) the resolved run file | 12.2 |
+| `Ctrl+h` | hide / show the legend | — |
+| `Ctrl+q` | quit | — |
+
+Where the rigid-body tool has a key for the same purpose, the same
+key is used; `Ctrl+[` / `Ctrl+]` change a mesh's fineness there and
+the graticule's here. The legend is drawn in the bottom-left corner
+of the 3D window at all times, produced from the same table the
+dispatcher reads, so that the keys shown can never drift from the
+keys honoured; `Ctrl+h` hides it for a screenshot.
+
+**Why `Ctrl+w` for save** and not `Ctrl+s`: `Ctrl+s` is single-step
+in the rigid-body tool, and a tool that steps where its sibling
+saves would teach the wrong reflex.
 
 ---
 

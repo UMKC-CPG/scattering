@@ -91,22 +91,107 @@ class Scene:
     telemetry: Telemetry
 
 
+N_DISC_BANDS = 8       # one per palette hue; design 11.11
+
+
+def band_index(store):
+    """For a disc beam, the band of impact parameter each particle
+    falls in: the disc divided into N_DISC_BANDS equal-count bands of
+    b (design 11.11). For an annuli beam, the annulus index itself, so
+    that callers need not know the layout."""
+    if store.beam.layout == 'annuli':
+        return np.asarray(store.annulus_index)
+    order = np.argsort(store.impact_parameter, kind='stable')
+    band = np.empty(store.n_particles, dtype=int)
+    band[order] = (N_DISC_BANDS * np.arange(store.n_particles)
+                   // store.n_particles)
+    return band
+
+
+def ring_of_particle(store, particle_index):
+    return int(band_index(store)[particle_index])
+
+
 def role_for_particle(store, particle_index):
-    ring = store.annulus_index[particle_index]
-    return f'annulus_{ring % 8}' if ring >= 0 else 'disc'
+    """One hue per ring, or per band of b for a disc (design 11.11)."""
+    return f'annulus_{ring_of_particle(store, particle_index) % 8}'
 
 
-def build_static(store, resolved, energy_index, tracked, glyph_radius,
-                 detector=None):
+def glyph_radius(resolved, rc):
+    """A FRACTION of R_max, never an absolute length (design 11.6)."""
+    return rc.glyph_radius_fraction * resolved.settings.r_max
+
+
+def shown_particles(store, hidden_rings, tracked):
+    """The particles a frame draws: those of shown rings, plus the
+    tracked particle whatever its ring (design 11.11)."""
+    rings = band_index(store)
+    return np.array([i for i in range(store.n_particles)
+                     if rings[i] not in hidden_rings or i == tracked],
+                    dtype=int)
+
+
+def ring_bands(store, resolved):
+    """The (impact, width) of each ring the legend and the toggles
+    address: the declared annuli, or a disc's equal-count bands."""
+    if store.beam.layout == 'annuli':
+        return [(ring.impact, ring.width)
+                for ring in resolved.spec.beam.annuli]
+    rings = band_index(store)
+    bands = []
+    for j in range(N_DISC_BANDS):
+        members = store.impact_parameter[rings == j]
+        if len(members) == 0:
+            continue
+        low, high = float(members.min()), float(members.max())
+        bands.append((low, max(high - low, 1e-12)))
+    return bands
+
+
+def ring_maps(store, resolved, energy_index):
+    """The annulus-to-cone record of each ring at one energy (design
+    5.7): stored for annuli, computed here for a disc's bands."""
+    if store.beam.layout == 'annuli':
+        return store.tables(energy_index)[3]
+    from scattering.beam.beam_spec import AnnulusSpec
+    from scattering.deflection import annulus_map
+    xsec = store.tables(energy_index)[1]
+    return [annulus_map(resolved.potential, store.energies[energy_index],
+                        AnnulusSpec(impact, width, 1), xsec)
+            for impact, width in ring_bands(store, resolved)]
+
+
+def ring_legend_lines(store, resolved, energy_index, hidden_rings):
+    """One line per ring, in the ring's hue when drawn (design 11.11):
+    its impact parameter, where its particles land at this energy, how
+    many there are, and whether it is hidden."""
+    rings = band_index(store)
+    lines = []
+    for j, ring_map in enumerate(ring_maps(store, resolved, energy_index)):
+        low = np.degrees(min(ring_map.theta_1, ring_map.theta_2))
+        high = np.degrees(max(ring_map.theta_1, ring_map.theta_2))
+        count = int(np.sum(rings == j))
+        mark = '   hidden' if j in hidden_rings else ''
+        lines.append(f'ring {j + 1}  b = {ring_map.impact:.3g}   theta '
+                     f'{low:.1f} - {high:.1f} deg   {count} particles'
+                     f'{mark}')
+    return lines
+
+
+def build_static(store, resolved, energy_index, tracked, glyph,
+                 detector=None, hidden_rings=frozenset()):
     """The drawables that do not change between frames at one energy
     and one tracked particle (pseudocode 11.4), plus the detector's
-    bin bands when a DetectorResult is given (pseudocode 7.7)."""
+    bin bands when a DetectorResult is given (pseudocode 7.7). A
+    hidden ring's ring, cone, traces, and free-flight legs are left
+    out, except the tracked particle's (design 11.11)."""
     k = energy_index
     spec = resolved.spec
     r_max = resolved.settings.r_max
     r_detect = resolved.detector_radius
     sign_label = resolved.potential.describe()
-    table, xsec, mirror, maps = store.tables(k)
+    maps = ring_maps(store, resolved, k)
+    rings = band_index(store)
     out = [
         Drawable('beam axis', '4.3', beam_axis(r_detect), 'axis', 'z',
                  'scene', True),
@@ -124,19 +209,26 @@ def build_static(store, resolved, energy_index, tracked, glyph_radius,
         for band in bin_bands(detector.layout, r_detect):
             out.append(Drawable('detector bin', '7.4', band, 'detector',
                                 None, 'scene', True))
-    for j, (ring, ring_map) in enumerate(zip(spec.beam.annuli, maps)):
+    from scattering.beam.beam_spec import AnnulusSpec
+    for j, ((impact, width), ring_map) in enumerate(
+            zip(ring_bands(store, resolved), maps)):
+        if j in hidden_rings:
+            continue
         role = f'annulus_{j % 8}'
+        ring = AnnulusSpec(impact, width, 1)
         out.append(Drawable('annulus', '5.7', annulus_ring(ring, r_max),
-                            role, f'b_{j} = {ring.impact:.3g}', 'scene',
+                            role, f'b_{j + 1} = {impact:.3g}', 'scene',
                             True))
         side = ' (far side)' if resolved.potential.value(1.0) < 0 else ''
         out.append(Drawable('cone', '5.7', cone_band(ring_map, r_detect),
-                            role, f'theta_{j}{side}', 'scene', True))
+                            role, f'theta_{j + 1}{side}', 'scene', True))
     geometry, label = probe_depth(resolved.potential, store.energies[k],
-        spec.beam.smallest_impact(), 2 * glyph_radius)
+        spec.beam.smallest_impact(), 2 * glyph)
     out.append(Drawable('probe depth', '2.3', geometry, 'probe', label,
                         'scene', True))
     for i in range(store.n_particles):
+        if rings[i] in hidden_rings and i != tracked:
+            continue
         times, positions, velocities, polar, phase = store.particle(k, i)
         trace = store.trace(k, i)
         if len(trace):
@@ -158,20 +250,22 @@ def build_static(store, resolved, energy_index, tracked, glyph_radius,
 
 
 def build_frame(store, resolved, energy_index, frame_index, tracked,
-                glyph_radius, scales):
-    """The per-frame drawables and the telemetry (pseudocode 11.4)."""
+                glyph, scales, hidden_rings=frozenset()):
+    """The per-frame drawables and the telemetry (pseudocode 11.4).
+    `glyph` is the display radius from `glyph_radius(resolved, rc)`."""
     k, n, i = energy_index, frame_index, tracked
     r_max = resolved.settings.r_max
     positions = store.frame(k, n)
-    roles = [role_for_particle(store, j) for j in range(store.n_particles)]
-    out = [Drawable('particles', '6.3', Points(positions, glyph_radius),
+    shown = shown_particles(store, hidden_rings, i)
+    roles = [role_for_particle(store, j) for j in shown]
+    out = [Drawable('particles', '6.3', Points(positions[shown], glyph),
                     roles, None, 'scene', False)]
     for geometry, role, label in tracked_markers(store, k, i, n, r_max,
-        resolved.detector_radius, glyph_radius, 0.1 * r_max):
+        resolved.detector_radius, glyph, 0.1 * r_max):
         out.append(Drawable('tracked marker', '11.2', geometry, role, label,
                             'scene', False))
     out.append(Drawable('tracked particle', '12.6',
-                        Points(positions[i][None, :], 1.6 * glyph_radius),
+                        Points(positions[i][None, :], 1.6 * glyph),
                         'tracked', f'particle {i}', 'scene', False))
     return out, telemetry_for(store, resolved, k, n, i, scales)
 

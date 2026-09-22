@@ -60,6 +60,9 @@ label travels with it. The inventory:
 
 ### The 2D panels
 
+Each panel is an ordinary matplotlib figure in its own window
+(11.10), not a picture inside the 3D window.
+
 | Panel | Content | Section |
 | --- | --- | --- |
 | Deflection function | `Θ(b̃)`, both signs; tracked particle |
@@ -72,6 +75,12 @@ label travels with it. The inventory:
 | Annulus-to-cone | `ΔA`, `ΔΩ`, their ratio, `dσ/dΩ` at the midpoint | 5.7 |
 | Error budget | the record of 9.8, three columns | 9.8 |
 | Telemetry | `t̃`, frame, energy, tracked `(r̃, φ, ṽ, Ẽ, L̃)` | 6, 9 |
+
+The telemetry is the one panel that stays in the 3D window, as
+text in its top-right corner; the key legend (12.15) is permanent
+text in the bottom-left corner. Both are text, not pictures, and
+they are the only two things drawn in the 3D window that are not
+scene geometry or the sliders of 12.4.
 
 The negative rule holds: a drawable with no quantity behind it does
 not go in. No decorative geometry, no unlabeled helper lines.
@@ -138,6 +147,8 @@ The distinctions this scene carries, and their redundant channels:
 | --- | --- | --- | --- |
 | Annulus `i` vs `j` | hue `i` | index label `bᵢ` | ring order |
 | Ring and its cone | same hue | same index label | particles |
+| Ring `i` and its legend line | hue `i` | the line's text | 11.11 |
+| Shown vs hidden ring | drawn vs absent | legend says `hidden` | 11.11 |
 | Integrated vs free flight | same | solid vs dashed | `phase` label |
 | Repulsive vs attractive | — | near vs far side of axis | label |
 | Measured vs unmeasured bins | fill vs hatch | bars vs none | label |
@@ -157,7 +168,16 @@ Three things are drawn away from their physical size, each labeled
 in the scene:
 
 - **Particle glyphs** have a display radius; particles are points.
-  The legend states the glyph size in natural units.
+  The radius is a **fraction of `R̃_max`** (rc default `0.03`), never
+  an absolute length: an absolute rc value of `0.02` in a scene of
+  `R̃_max = 40` made every particle a thousandth of the window and
+  invisible, so that a playing scene showed only the tracked
+  particle's arrow. The default is set by what the window shows: the
+  default camera frames the whole detector sphere, of radius
+  `R̃_detect = 2 R̃_max`, so the window spans about `4 R̃_max`, and a
+  glyph of `0.03 R̃_max` is about one part in 130 of the width, four
+  or five pixels of radius in a 1280-pixel window. The legend states
+  the resulting glyph radius in natural units.
 - **The detector sphere** is at `R̃_detect`, which is a real setting,
   but is drawn at reduced opacity so the orbits behind it are
   visible; the label gives its radius.
@@ -200,7 +220,114 @@ rings, cones, and probe-depth spheres to HDF5 as geometry (Section
 
 ---
 
+## 11.10 Windows: one scene, several figures
+
+The tool opens **one 3D window** and **one ordinary window per 2D
+panel**. The 3D window holds the scene, the two sliders (12.4, 12.5),
+the telemetry text, and the key legend; nothing else. Each 2D panel
+is a matplotlib figure in a window of its own, resizable and
+savable with matplotlib's own toolbar, on a second monitor if the
+student has one.
+
+The first version placed the panels as pictures inside three small
+viewports of the 3D window. It was a shortcut of the renderer, not
+a decision, and it had two faults a student meets at once: the
+pictures could be rotated in three dimensions like any viewport,
+which is meaningless for a graph; and they took thirty per cent of
+the window from the scene, which is why the scene overlapped its
+own telemetry text.
+
+**How a figure is kept current.** A panel's content depends on a
+small key — the energy index, the tracked particle, the detector
+layout and mode, the mirror toggle — and is redrawn only when that
+key changes, never per frame. The session loop (12.3) pumps
+matplotlib's event queue each tick beside VTK's, which is what
+keeps the figure windows responsive between redraws. A closed
+figure window is reopened on the next redraw, since closing a graph
+must not end the session; quitting the session closes all of them.
+
+**Offscreen.** With no window (`--offscreen`, `--check`, the tests)
+a panel is rendered to an array by matplotlib's Agg backend exactly
+as before, so the pixel checks of 11.8 and the render tests keep
+their meaning, and the batch tier's figure export (13) has the same
+function to call.
+
+**Backend.** matplotlib's Tk backend is what ships with a
+python.org Python and with conda, on Linux, macOS, and Windows, and
+it is the one this design relies on; where it is missing the panels
+fall back to the offscreen array and a one-line notice, and the
+scene still runs.
+
+---
+
+## 11.11 The rings: a legend, and choosing which to show
+
+A ring on the entry plane is one annulus of the beam (3.3): its
+particles start on it, and the band of the same hue on the detector
+sphere is where they land. That is the annulus-to-cone picture of
+11.3 and the reason the scene exists, and the first version left it
+unsaid: five coloured rings, five coloured bands, and only a small
+`b_i` label in the plane to connect them.
+
+**The ring legend** is text in the 3D window, one line per ring in
+the ring's hue, always visible:
+
+```
+  ring 0  b = 0.25   theta 39.6 - 43.5 deg   24 particles
+  ring 1  b = 0.50   theta 21.6 - 23.9 deg   24 particles   hidden
+  ...
+```
+
+The angles are the cone's `[θ(b̃ + db̃), θ(b̃)]` at the current
+energy, from the deflection table; they change with the energy
+slider, which is itself a lesson (G5).
+
+**Choosing rings.** `Ctrl+1` … `Ctrl+9` toggle ring `i` (its ring,
+its cone, its traces, and its particles together; the tracked
+particle, if it belongs to a hidden ring, stays drawn); `Ctrl+a`
+toggles all: if every ring is shown it hides them all but the
+tracked particle, otherwise it shows them all. This is a
+viewing control (12.2): the store is untouched, and the detector
+counts of 7 are unaffected by what is drawn. It answers the question
+a student asks first — "what happens to the ones that come in close
+versus far out?" — by letting them look at one ring at a time.
+
+**A disc beam** has no rings; the same controls select *bands* of
+impact parameter, the disc's `[b̃_min, b̃_max]` divided into as many
+equal-count bands as the palette has hues (eight), each drawn in
+its hue exactly as a ring would be, with the same legend lines.
+
+---
+
+## 11.12 The detector sphere's graticule
+
+The detector sphere is drawn as **lines of latitude and longitude**
+(a graticule) rather than a translucent surface: a surface at any
+opacity either hides the orbits behind it or washes out the bin
+bands, and a graticule does neither while still reading as a
+sphere. The latitude lines are lines of constant scattering angle
+`θ`, so they are also a scale: with `n` lines from pole to pole the
+spacing is `180° / n`, and the legend says so. `Ctrl+[` and `Ctrl+]`
+remove and add lines (`n` in `[4, 36]`, default 12, longitude lines
+always `2n`); this is a display choice and is labeled as one (P14).
+The bin bands of 7.4 and the unmeasured caps of 7.3 are drawn on the
+same sphere as before.
+
+---
+
 ## 11.8 Invariants and tests
+
+- With every ring hidden, the frame's dynamic drawables contain
+  exactly the tracked particle's glyph and markers; with all shown,
+  every particle (11.11).
+- The ring legend's angles equal the cone bands' angles for the
+  same energy (11.11 against 11.3).
+- The glyph radius in a built frame equals the rc fraction times
+  `R̃_max` (11.6).
+- The graticule's latitude count stays in `[4, 36]` under any key
+  sequence (11.12).
+- Rendering a panel offscreen yields the same array whether or not
+  a figure window exists (11.10).
 
 - Every drawable has a non-empty `quantity`, `label`, and `role`;
   the scene builder refuses one without.

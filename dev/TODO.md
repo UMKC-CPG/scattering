@@ -90,7 +90,14 @@ numbering so older cross-references still resolve.
       (P13), and the template itself keeps the originals.
 - [ ] (D11/D12) Camera framing: the default camera clips the
       detector sphere at distance 3; raised to 4. A "fit to scene"
-      key and per-energy framing are refinements.
+      key (`Ctrl+f`, a camera command under D12.14) and per-energy
+      framing are refinements. Seen 2026-09-22 in screenshots: at
+      distance 4 `R_detect` the whole sphere fits but the orbits,
+      which live inside `R_max = R_detect / 2`, occupy the middle
+      sixth of the window, and the 120 straight free-flight legs
+      dominate the picture. A second default framing that fills the
+      window with the `R_max` region, and a lighter encoding for the
+      free-flight legs, are what to try first.
 - [ ] (src/scattering/) Remaining groups per A4 — `detector/`,
       `inversion/`, `analysis/`, `geometry/`, `render/`, `ui/`,
       `sinks/` — each after its pseudocode section.

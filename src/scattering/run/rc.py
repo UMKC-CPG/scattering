@@ -41,7 +41,7 @@ class RcSettings:
                              'effective_potential', 'error_budget',
                              'telemetry')
     window_size: tuple = (1280, 960)
-    glyph_radius: float = 0.02
+    glyph_radius_fraction: float = 0.03
     output_dir: str = '.'
 
 

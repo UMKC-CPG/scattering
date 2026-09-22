@@ -15,12 +15,16 @@ Attribution: this module is part of the scattering teaching tool.
 
 from dataclasses import dataclass, field
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt          # noqa: E402  (after use('Agg'))
-import numpy as np                       # noqa: E402
+import numpy as np
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 
-from scattering.core.natural_units import angular_momentum   # noqa: E402
+from scattering.core.natural_units import angular_momentum
+
+# No pyplot here, and no backend choice: this module draws into a
+# Figure it is handed, so that the same code fills a figure WINDOW
+# (render/panel_windows.py, which chooses the GUI backend) and an
+# offscreen Agg canvas (render_panel below, the tests and --check).
 
 _LINE_STYLES = {'solid': '-', 'dashed': '--', 'dotted': ':',
                 'dash_dot': '-.'}
@@ -200,15 +204,15 @@ def build_panel(name, store, resolved, k, tracked, show_mirror,
     raise ValueError(f'unknown panel {name!r}')
 
 
-def render_panel(data, palette, background, size=(400, 300)):
-    """An RGB uint8 array of the panel, via matplotlib Agg.
+def draw_panel_into(fig, data, palette, background):
+    """Draw one panel into an existing matplotlib Figure (pseudocode
+    11.6), clearing whatever it held.
 
     A panel with text columns (the error budget) puts the columns in
     the upper part of the figure and its curves below; every other
     panel is one axes with its notes in a corner.
     """
-    dpi = 100
-    fig = plt.figure(figsize=(size[0] / dpi, size[1] / dpi), dpi=dpi)
+    fig.clear()
     fig.patch.set_facecolor(background)
     foreground = palette['exact_curve'].color
     if data.text_columns:
@@ -264,7 +268,15 @@ def render_panel(data, palette, background, size=(400, 300)):
                 va='bottom')
         if not (data.curves or data.markers):
             ax.set_axis_off()
-    fig.canvas.draw()
-    image = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
-    plt.close(fig)
-    return image
+
+
+def render_panel(data, palette, background, size=(400, 300)):
+    """An RGB uint8 array of the panel, drawn offscreen with the Agg
+    canvas: the path the tests, `--check`, and the batch tier's figure
+    export use, independent of any window (design 11.10)."""
+    dpi = 100
+    fig = Figure(figsize=(size[0] / dpi, size[1] / dpi), dpi=dpi)
+    canvas = FigureCanvasAgg(fig)
+    draw_panel_into(fig, data, palette, background)
+    canvas.draw()
+    return np.asarray(canvas.buffer_rgba())[..., :3].copy()

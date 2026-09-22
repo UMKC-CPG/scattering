@@ -30,40 +30,42 @@ import vedo                                       # noqa: E402
 from scattering.geometry import (Arc, Arrow, Plane, Points, Polyline,   # noqa
                                  Ring, Segment, Sphere, SphereBand, Text)
 from scattering.render.palettes import BACKGROUNDS, PALETTES   # noqa: E402
-from scattering.render.panels import build_panel, render_panel  # noqa
 
 _LINE_STYLE_PATTERNS = {'solid': None, 'dashed': 0x00FF, 'dotted': 0x1111,
                         'dash_dot': 0x1C47}
 
-
-def _layout(n_panels):
-    """The scene takes 70 % of the width; panels stack on the right."""
-    shape = [dict(bottomleft=(0.0, 0.0), topright=(0.7, 1.0))]
-    if n_panels:
-        height = 1.0 / n_panels
-        for index in range(n_panels):
-            shape.append(dict(bottomleft=(0.7, 1.0 - (index + 1) * height),
-                              topright=(1.0, 1.0 - index * height)))
-    return shape
+# Where the three text blocks sit (design 11.2, 11.11, 12.15), as
+# normalized window coordinates; the sliders take the bottom strip and
+# the right margin (design 12.4, 12.5).
+_TELEMETRY_POSITION = 'top-right'
+_RING_LEGEND_ORIGIN = (0.01, 0.98)          # first line; then downwards
+_RING_LEGEND_STEP = 0.028
+_KEY_LEGEND_POSITION = 'bottom-left'
 
 
 class VedoRenderer:
-    """See the module docstring and pseudocode 11.6."""
+    """See the module docstring and pseudocode 11.6. One 3D viewport;
+    the 2D panels are matplotlib windows (render/panel_windows.py)."""
 
-    def __init__(self, palette_name, size=(1280, 960), offscreen=False,
-                 panels=()):
+    def __init__(self, palette_name, size=(1280, 960), offscreen=False):
         self.palette_name = palette_name
-        self.panels = [p for p in panels if p != 'telemetry']
-        self.plotter = vedo.Plotter(shape=_layout(len(self.panels)),
-            size=tuple(size), offscreen=offscreen, sharecam=False, axes=0,
-            bg=BACKGROUNDS[palette_name])
+        self.offscreen = bool(offscreen)
+        self.plotter = vedo.Plotter(size=tuple(size), offscreen=offscreen,
+                                    axes=0, bg=BACKGROUNDS[palette_name])
         self.static_actors = {}
         self.static_key = None
         self.frame_actors = []
-        self.panel_actors = []
-        self.panel_key = None
-        self.overlay = None
-        self.legend = None
+        self.text_actors = []
+        self.legend_visible = True
+        self.legend_lines = []
+        self.graticule_lines = 12
+        # Design 12.14: the camera is applied only when this changes.
+        self.camera_applied = None
+        self.camera_set_count = 0
+        # Design 12.4-12.5: the two slider widgets, built on the first
+        # on-screen show; their callbacks hand commands to this sink.
+        self.sliders = None
+        self.command_sink = None
         self._shown = False
 
     @property
@@ -75,46 +77,43 @@ class VedoRenderer:
         self.plotter.background(BACKGROUNDS[palette_name])
         self.static_actors.clear()
         self.static_key = None
-        self.panel_key = None
 
-    def render(self, scene, camera, static_key, store=None, resolved=None,
-               tracked=0, show_mirror=False, detector=None, budget=None):
+    def set_graticule(self, n_lines):
+        """Rebuild the detector sphere with `n_lines` lines of latitude
+        (design 11.12) at the next frame."""
+        if n_lines != self.graticule_lines:
+            self.graticule_lines = int(n_lines)
+            self.static_actors.clear()
+            self.static_key = None
+
+    def render(self, scene, camera, static_key, resolved=None, state=None,
+               ring_lines=()):
         """Draw one frame. Static actors are rebuilt only when
-        `static_key` changes; panels likewise (pseudocode 11.6)."""
-        scene_view = self.plotter.at(0)
+        `static_key` changes (pseudocode 11.6)."""
+        view = self.plotter.at(0)
         if static_key != self.static_key:
             for actors in self.static_actors.values():
-                scene_view.remove(*actors)
+                view.remove(*actors)
             self.static_actors = {static_key: [
                 actor for drawable in scene.static
                 for actor in self._actors_for(drawable)]}
-            scene_view.add(*self.static_actors[static_key])
+            view.add(*self.static_actors[static_key])
             self.static_key = static_key
-            if self.legend is not None:
-                scene_view.remove(self.legend)
-            self.legend = vedo.Text2D(self._legend_text(scene.static),
-                pos='bottom-left', s=0.55, c=self.palette['text'].color)
-            scene_view.add(self.legend)
         if self.frame_actors:
-            scene_view.remove(*self.frame_actors)
+            view.remove(*self.frame_actors)
         self.frame_actors = [actor for drawable in scene.dynamic
                              for actor in self._actors_for(drawable)]
-        scene_view.add(*self.frame_actors)
-        if self.overlay is not None:
-            scene_view.remove(self.overlay)
-        self.overlay = vedo.Text2D('\n'.join(scene.telemetry.lines()),
-            pos='top-left', s=0.6, font='Calco', c=self.palette['text'].color)
-        scene_view.add(self.overlay)
-        self._set_camera(scene_view, camera, resolved)
-        if store is not None and self.panels:
-            key = (static_key, tracked, show_mirror)
-            if key != self.panel_key:
-                self._draw_panels(store, resolved, static_key[0], tracked,
-                                  show_mirror, detector, budget)
-                self.panel_key = key
+        view.add(*self.frame_actors)
+        self._draw_text(scene.telemetry.lines(), ring_lines)
+        if camera != self.camera_applied:
+            self._set_camera(view, camera, resolved)
         if not self._shown:
             self.plotter.show(interactive=False, resetcam=False)
             self._shown = True
+        if state is not None and not self.offscreen:
+            if self.sliders is None:
+                self._build_sliders(state)
+            self._sync_sliders(state)
         self.plotter.render()
 
     def screenshot(self, path=None, as_array=False):
@@ -123,14 +122,12 @@ class VedoRenderer:
     def close(self):
         self.plotter.close()
 
-    def show_legend(self, lines):
-        """The key-binding legend, as an overlay for a few frames."""
-        text = vedo.Text2D('\n'.join(lines), pos='top-right', s=0.6,
-                           c=self.palette['text'].color)
-        self.plotter.at(0).add(text)
-        return text
+    def set_legend(self, lines):
+        """The key legend's text (design 12.15), drawn each frame while
+        `legend_visible`."""
+        self.legend_lines = list(lines)
 
-    # --- Internals ------------------------------------------------
+    # --- The camera (design 12.14) ----------------------------------
 
     def _set_camera(self, view, camera, resolved):
         r_detect = resolved.detector_radius if resolved else 1.0
@@ -145,31 +142,88 @@ class VedoRenderer:
         cam.SetFocalPoint(0.0, 0.0, 0.0)
         cam.SetViewUp(0.0, 0.0, 1.0)
         view.renderer.ResetCameraClippingRange()
+        self.camera_applied = dict(camera)
+        self.camera_set_count += 1
+        self._r_detect = r_detect
 
-    def _draw_panels(self, store, resolved, k, tracked, show_mirror,
-                     detector=None, budget=None):
-        for actor in self.panel_actors:
-            self.plotter.remove(actor)
-        self.panel_actors = []
-        background = BACKGROUNDS[self.palette_name]
-        for index, name in enumerate(self.panels, start=1):
-            data = build_panel(name, store, resolved, k, tracked,
-                               show_mirror, detector, budget)
-            if data is None:
-                continue
-            image = render_panel(data, self.palette, background)
-            actor = vedo.Image(image)
-            self.plotter.at(index).add(actor)
-            self.plotter.at(index).reset_camera()
-            self.panel_actors.append(actor)
+    def read_camera(self):
+        """The live camera as the run file's three numbers, so that a
+        view found with the mouse can be saved (design 12.14)."""
+        cam = self.plotter.at(0).camera
+        r_detect = getattr(self, '_r_detect', 1.0)
+        offset = np.array(cam.GetPosition()) - np.array(cam.GetFocalPoint())
+        distance = float(np.linalg.norm(offset))
+        if distance == 0.0:
+            return dict(self.camera_applied or {})
+        return {'azimuth_deg': float(np.degrees(np.arctan2(offset[1],
+                                                           offset[0]))),
+                'elevation_deg': float(np.degrees(np.arcsin(
+                    np.clip(offset[2] / distance, -1.0, 1.0)))),
+                'distance': distance / r_detect}
 
-    def _legend_text(self, static):
-        seen = []
-        for drawable in static:
-            entry = f'{drawable.quantity} (design {drawable.section})'
-            if entry not in seen:
-                seen.append(entry)
-        return 'drawables:\n' + '\n'.join(seen[:14])
+    # --- Text (design 11.2, 11.11, 12.15) ---------------------------
+
+    def _draw_text(self, telemetry_lines, ring_lines):
+        view = self.plotter.at(0)
+        if self.text_actors:
+            view.remove(*self.text_actors)
+        colour = self.palette['text'].color
+        actors = [vedo.Text2D('\n'.join(telemetry_lines),
+                              pos=_TELEMETRY_POSITION, s=0.6, font='Calco',
+                              c=colour)]
+        # One actor per ring line, so that each is in its ring's hue.
+        x0, y0 = _RING_LEGEND_ORIGIN
+        for j, line in enumerate(ring_lines):
+            hue = self.palette[f'annulus_{j % 8}'].color
+            actors.append(vedo.Text2D(line, pos=(x0, y0 - j
+                                                 * _RING_LEGEND_STEP),
+                                      s=0.6, font='Calco', c=hue))
+        if self.legend_visible and self.legend_lines:
+            actors.append(vedo.Text2D('\n'.join(self.legend_lines),
+                                      pos=_KEY_LEGEND_POSITION, s=0.5,
+                                      font='Calco', c=colour))
+        view.add(*actors)
+        self.text_actors = actors
+
+    # --- Sliders (design 12.4, 12.5) --------------------------------
+
+    def _build_sliders(self, state):
+        n_samples = getattr(state, 'n_samples', None)
+        n_energies = getattr(state, 'n_energies', None)
+        if n_samples is None or n_energies is None or \
+                self.command_sink is None:
+            self.sliders = {}
+            return
+        colour = self.palette['text'].color
+
+        def on_time(widget, event):
+            value = widget.GetRepresentation().GetValue()
+            self.command_sink(('seek', int(round(value))))
+
+        def on_energy(widget, event):
+            value = widget.GetRepresentation().GetValue()
+            self.command_sink(('set_energy', int(round(value))))
+
+        self.sliders = {
+            'time': self.plotter.add_slider(on_time, 0, n_samples - 1,
+                value=state.frame_index, pos=5, title='frame', c=colour,
+                title_size=0.7),
+        }
+        if n_energies > 1:
+            self.sliders['energy'] = self.plotter.add_slider(on_energy, 0,
+                n_energies - 1, value=state.energy_index, pos=15,
+                title='energy', c=colour, title_size=0.7)
+
+    def _sync_sliders(self, state):
+        """Move the knobs to the state without firing the callbacks."""
+        if not self.sliders:
+            return
+        self.sliders['time'].GetRepresentation().SetValue(state.frame_index)
+        if 'energy' in self.sliders:
+            self.sliders['energy'].GetRepresentation().SetValue(
+                state.energy_index)
+
+    # --- Actors -----------------------------------------------------
 
     def _actors_for(self, drawable):
         geometry = drawable.geometry
@@ -179,6 +233,8 @@ class VedoRenderer:
             # Per-point roles: color each glyph by its own role. The spheres are
             # merged into one mesh, so colors are given per sphere at
             # construction rather than per vertex afterwards.
+            if len(geometry.positions) == 0:
+                return []
             colors = [self.palette[r].color for r in drawable.role]
             actor = vedo.Spheres(geometry.positions, r=geometry.radius,
                                  res=8, c=colors)
@@ -210,10 +266,11 @@ class VedoRenderer:
             actors.append(_sphere_band_mesh(geometry).c(color).alpha(
                 max(encoding.opacity * 0.6, 0.3)))
         elif isinstance(geometry, Sphere):
-            actor = vedo.Sphere(pos=geometry.center, r=geometry.radius,
-                                res=36).c(color).alpha(encoding.opacity)
-            actor.wireframe(False)
-            actors.append(actor)
+            # A graticule, not a surface (design 11.12): n lines of
+            # latitude (constant scattering angle) and 2n of longitude.
+            for points in _graticule(geometry, self.graticule_lines):
+                actors.append(vedo.Line(points, lw=1).c(color).alpha(
+                    max(encoding.opacity, 0.5)))
         elif isinstance(geometry, Plane):
             side = 2.0 * geometry.half_extent
             actor = vedo.Plane(pos=geometry.center, normal=geometry.normal,
@@ -236,6 +293,28 @@ class VedoRenderer:
             actors.append(vedo.Text3D(drawable.label, pos=anchor,
                                       s=0.025 * _extent(geometry)).c(color))
         return actors
+
+
+def _graticule(sphere, n_latitude, n_points=90):
+    """The polylines of a sphere's graticule (design 11.12): latitude
+    circles at polar angles k * pi / n_latitude, k = 1 .. n_latitude-1,
+    and 2 * n_latitude meridian semicircles."""
+    c, r = sphere.center, sphere.radius
+    lines = []
+    azimuths = np.linspace(0.0, 2.0 * np.pi, n_points)
+    for k in range(1, n_latitude):
+        theta = k * np.pi / n_latitude
+        lines.append(c + r * np.stack([np.sin(theta) * np.cos(azimuths),
+                                       np.sin(theta) * np.sin(azimuths),
+                                       np.full_like(azimuths,
+                                                    np.cos(theta))], axis=1))
+    polar = np.linspace(0.0, np.pi, n_points // 2)
+    for m in range(2 * n_latitude):
+        phi = m * np.pi / n_latitude
+        lines.append(c + r * np.stack([np.sin(polar) * np.cos(phi),
+                                       np.sin(polar) * np.sin(phi),
+                                       np.cos(polar)], axis=1))
+    return lines
 
 
 def _apply_line_style(actor, line_style):

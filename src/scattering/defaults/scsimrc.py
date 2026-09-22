@@ -45,9 +45,13 @@ def parameters_and_defaults():
                            'telemetry'],
         'window_size': [1280, 960],
 
-        # Particle glyph radius in natural units, a labeled display convention;
-        # design 11.6.
-        'glyph_radius': 0.02,
+        # Particle glyph radius as a FRACTION of R_max, a labeled display
+        # convention (design 11.6). A fraction, not a length: an absolute
+        # 0.02 in a scene of R_max = 40 made every particle a thousandth
+        # of the window, invisible. The default camera shows the whole
+        # detector sphere (radius 2 R_max), so the window spans about
+        # 4 R_max and 0.03 R_max is four or five pixels of radius.
+        'glyph_radius_fraction': 0.03,
 
         # Where saved run files and screenshots go.
         'output_dir': '.',
