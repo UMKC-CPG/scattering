@@ -38,16 +38,23 @@ def unmeasured_caps(theta_min, theta_head, r_detect):
             SphereBand(_ORIGIN, float(r_detect), float(theta_head), np.pi))
 
 
-def bin_bands(layout, r_detect, half_width_deg=0.12):
-    """A thin band at every bin edge of a detector layout, so the
-    histogram's bins are visible on the sphere (pseudocode 7.7)."""
+def bin_bands(layout, r_detect, half_width_deg=0.12, azimuth=np.pi / 2,
+              half_span_deg=4.0):
+    """A tick mark at every bin edge of a detector layout, so the
+    histogram's bins are visible on the sphere (pseudocode 7.7): a
+    short band, `2 * half_span_deg` of azimuth wide, centred on one
+    meridian. Ticks along a meridian, not bands round the sphere, so
+    that forty-one bin edges do not read as lines of latitude beside
+    the graticule (design 11.12)."""
     half_width = np.radians(half_width_deg)
+    half_span = np.radians(half_span_deg)
+    span = (azimuth - half_span, azimuth + half_span)
     bands = []
     for edge in layout.edges:
         low = max(0.0, edge - half_width)
         high = min(np.pi, edge + half_width)
         bands.append(SphereBand(_ORIGIN, float(r_detect), float(low),
-                                float(high)))
+                                float(high), span))
     return bands
 
 

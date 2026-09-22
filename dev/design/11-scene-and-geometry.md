@@ -310,8 +310,20 @@ sphere. The latitude lines are lines of constant scattering angle
 spacing is `180° / n`, and the legend says so. `Ctrl+[` and `Ctrl+]`
 remove and add lines (`n` in `[4, 36]`, default 12, longitude lines
 always `2n`); this is a display choice and is labeled as one (P14).
-The bin bands of 7.4 and the unmeasured caps of 7.3 are drawn on the
-same sphere as before.
+The unmeasured caps of 7.3 are drawn on the same sphere as before.
+
+**The bin edges are a scale, not more latitude lines.** The first
+version drew the detector's bin edges (7.4) as thin bands right round
+the sphere. With forty logarithmic bins that is forty-one circles,
+dense toward the forward direction, and they read as lines of
+latitude: on screen the graticule's own circles were lost among them,
+and `Ctrl+[` appeared to change only the meridians. So the bin edges
+are drawn as **tick marks along one meridian** — short arcs of a few
+degrees of azimuth at each edge, on the meridian at azimuth `90°`,
+which faces the default camera — like the divisions on a protractor's
+rim. The histogram's bins stay visible on the sphere, where a
+student can match a bar to its band of `θ`, without imitating the
+graticule. `Ctrl+b`, which cycles the bin layout, moves the ticks.
 
 ---
 

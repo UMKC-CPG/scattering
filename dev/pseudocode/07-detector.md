@@ -42,7 +42,7 @@ What it produces, `DetectorResult` (7.2), is consumed by:
   a `detector` argument (7.7). The `histogram` placeholder is
   replaced by this panel.
 - `geometry/cone.py` and `render/scene_description.py`: a new
-  `bin_bands(edges, r_detect)` draws the bin edges as thin bands on
+  `bin_bands(edges, r_detect)` draws the bin edges as tick marks on
   the detector sphere, one static drawable with role `detector`.
 - `ui/interactive_session.py`: the static cache key becomes
   `(k, palette, tracked, detector_layout, detector_mode)`, and the
@@ -241,9 +241,13 @@ function panel_cross_section(store, k, detector: DetectorResult | None):
     # draws bars with ax.hlines + vertical error bars, arrows with
     # ax.annotate, hatched spans with ax.axvspan(hatch="//", alpha=.15).
 
-function bin_bands(layout, r_detect) -> list of SphereBand:
-    # geometry/cone.py: a thin band at every edge, width 0.25 deg,
-    # role "detector"; drawn at low opacity so the cones stay legible.
+function bin_bands(layout, r_detect, azimuth=pi/2, half_span=4 deg)
+        -> list of SphereBand:
+    # geometry/cone.py: a tick at every edge -- a SphereBand 0.25 deg
+    # wide in theta and 2 * half_span wide in azimuth, centred on one
+    # meridian -- so that the bin edges are a scale along that
+    # meridian and not forty-one circles that read as a graticule
+    # (D11.12). Role "detector".
 ```
 
 ---
